@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lakers Bullpen — 2025 Migration</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js" onerror="console.warn('auto-init unavailable')"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--royal:#0047AB;--royal-dark:#003080;--royal-deep:#001f52;--green:#00994D;
+--bg:#071225;--surface:#0c1e3a;--surface2:#112a4d;--border:#1c3a66;
+--text:#e8ecf1;--text-dim:#7a96b8;--silver-light:#C8D0D8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 60px;}
+.wrap{max-width:680px;margin:0 auto;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.04em;text-align:center;
+background:linear-gradient(135deg,var(--royal-dark),var(--royal-deep));border:1px solid var(--border);
+border-radius:12px;padding:18px;margin-bottom:18px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:0.05em;margin-bottom:10px;color:var(--silver-light);}
+label{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin:10px 0 4px;}
+input,textarea{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+font-family:'DM Sans',sans-serif;font-size:0.85rem;padding:9px 10px;border-radius:8px;}
+textarea{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;resize:vertical;min-height:120px;}
+.check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.8rem;color:var(--text-dim);}
+.check input{width:auto;}
+button.go{width:100%;margin-top:16px;background:linear-gradient(135deg,#0F9D58,#0B8043);color:#fff;border:none;
+border-radius:8px;padding:13px;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;
+letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
+button.go:disabled{opacity:0.45;cursor:default;}
+.log{background:#040b18;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;
+font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.7;max-height:360px;overflow-y:auto;white-space:pre-wrap;display:none;}
+.log .ok{color:#00c964;}.log .err{color:#ef4444;}.log .info{color:var(--text-dim);}.log .head{color:var(--silver-light);font-weight:600;}
+.note{font-size:0.74rem;color:var(--text-dim);line-height:1.55;}
+.note b{color:var(--silver-light);}
+ol{margin:8px 0 0 18px;font-size:0.78rem;color:var(--text-dim);line-height:1.7;}
+ol b{color:var(--silver-light);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚾ 2025 SEASON MIGRATION</h1>
+
+  <div class="card">
+    <h2>What this does</h2>
+    <p class="note">Adds the <b>2025 season</b> to the app: each pitcher's final
+    leaderboard stats (execution % and velocities) plus their video links. 2025 was
+    recorded as season totals — not pitch-by-pitch — so it powers the leaderboard,
+    the year-to-year trend charts, and the season table, but it has no command heat
+    map or pitch-location map (there's no 2025 zone data). This does <b>not</b> touch
+    your 2026 data or change which season is "current."</p>
+  </div>
+
+  <div class="card">
+    <h2>Step 1 · Get the data from the 2025 sheet</h2>
+    <ol>
+      <li>Open the 2025 spreadsheet → <b>Extensions → Apps Script</b></li>
+      <li>Paste in the <b>export-2025.gs</b> script, then run <b>exportSeason2025</b></li>
+      <li>Open the execution log, copy everything between the <b>BEGIN / END</b> markers</li>
+      <li>Paste it in the box below</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Step 2 · Paste &amp; import</h2>
+    <label>2025 data (the JSON block from the script)</label>
+    <textarea id="payload" placeholder='{"season":"2025","pitchers":[ ... ]}'></textarea>
+    <label>PIN</label>
+    <input type="password" id="pin" maxlength="4" inputmode="numeric" placeholder="Coach PIN">
+    <div class="check"><input type="checkbox" id="overwrite" checked><span>Overwrite existing 2025 records (safe to re-run)</span></div>
+    <button class="go" id="btnGo" onclick="runMigration()">▶ Import 2025</button>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+const logEl=document.getElementById('log');
+function log(msg,cls){logEl.style.display='block';const l=document.createElement('div');if(cls)l.className=cls;l.textContent=msg;logEl.appendChild(l);logEl.scrollTop=logEl.scrollHeight;}
+
+function docId(name){return String(name).trim().replace(/[^a-zA-Z0-9]+/g,'_');}
+function toFirstLast(n){n=String(n).trim();if(n.indexOf(',')===-1)return n;const p=n.split(',');return p[1].trim()+' '+p[0].trim();}
+
+async function runMigration(){
+  const btn=document.getElementById('btnGo');
+  if(document.getElementById('pin').value.trim()!=='2149'){log('✗ Incorrect PIN','err');return;}
+  let payload;
+  try{
+    payload=JSON.parse(document.getElementById('payload').value.trim());
+  }catch(e){log('✗ Could not parse the pasted data — make sure you copied the whole JSON block between BEGIN and END','err');return;}
+  if(!payload||payload.season!=='2025'||!Array.isArray(payload.pitchers)){
+    log('✗ That JSON doesn\'t look like the 2025 export','err');return;
+  }
+  const overwrite=document.getElementById('overwrite').checked;
+  const season='2025';
+
+  btn.disabled=true; logEl.innerHTML='';
+  try{
+    if(typeof firebase==='undefined'||!firebase.apps.length){
+      throw new Error('Firebase not initialized — open this page on your Firebase site (lakers-bullpen.web.app/migrate-2025.html)');
+    }
+    const db=firebase.firestore();
+    const seasonRef=db.collection('seasons').doc(season);
+
+    // Step 1 — config: register 2025 as an available (non-current) season
+    log('STEP 1 · Registering 2025 season','head');
+    const cfgRef=db.collection('config').doc('app');
+    const cfg=await cfgRef.get();
+    if(cfg.exists){
+      const seasons=(cfg.data().seasons||[]).map(String);
+      if(!seasons.includes(season)){
+        await cfgRef.set({seasons:firebase.firestore.FieldValue.arrayUnion(season)},{merge:true});
+        log('  ✓ Added 2025 to the season list (current season unchanged)','ok');
+      }else{ log('  · 2025 already in season list','info'); }
+    }else{
+      // Unlikely (2026 migration creates this), but handle gracefully
+      await cfgRef.set({currentSeason:'2026',seasons:['2026','2025']},{merge:true});
+      log('  ✓ Created config with 2025 + 2026','ok');
+    }
+
+    // Roster from the imported names
+    const roster=payload.pitchers.map(p=>toFirstLast(p.name));
+    await seasonRef.set({year:season,roster:roster},{merge:true});
+    log('  ✓ 2025 roster: '+roster.length+' pitchers','ok');
+
+    // Step 2 — write each pitcher's summary doc + videos
+    log('STEP 2 · Importing pitcher stats + videos','head');
+    let done=0, vids=0, skipped=0;
+    for(const p of payload.pitchers){
+      const name=toFirstLast(p.name);
+      const id=docId(name);
+      const pRef=seasonRef.collection('pitchers').doc(id);
+
+      if(!overwrite){
+        const existing=await pRef.get();
+        if(existing.exists){ skipped++; log('  · '+name+' — exists, skipped','info'); continue; }
+      }
+
+      // Summary doc — same shape the app's leaderboard + player cards read.
+      // 2025 has no pitch counts, so usage counts are 0 (heat map/usage bar
+      // simply won't show for 2025, which is expected).
+      await pRef.set({
+        name:name,
+        exec:num(p.exec),
+        faAvg:num(p.faAvg), faExec:num(p.faExec),
+        cbAvg:num(p.cbAvg), cbExec:num(p.cbExec),
+        chAvg:num(p.chAvg), chExec:num(p.chExec),
+        faCount:0, cbCount:0, chCount:0,
+        totalPitches:0,
+        recentSessions:[],
+        importedFrom:'2025 leaderboard sheet',
+        updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Videos (from the hyperlinked date cells)
+      const cleanVids=(p.videos||[]).filter(v=>v.url);
+      if(cleanVids.length){
+        await seasonRef.collection('videos').doc(id).set({name:name,videos:cleanVids});
+        vids+=cleanVids.length;
+      }
+      done++;
+      log('  ✓ '+name+(cleanVids.length?' — '+cleanVids.length+' video(s)':''),'ok');
+    }
+
+    log('','info');
+    log('DONE · '+done+' pitchers imported, '+vids+' videos, '+skipped+' skipped','head');
+    log('Open the app, switch the Season filter to 2025, and check the leaderboard. Then open any pitcher who has both years to see the trend lines connect.','ok');
+  }catch(e){
+    log('✗ '+e.message,'err'); console.error(e);
+  }finally{ btn.disabled=false; }
+}
+
+function num(v){const n=parseFloat(v);return isNaN(n)?0:n;}
+</script>
+</body>
+</html>

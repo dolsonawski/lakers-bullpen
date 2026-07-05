@@ -1,0 +1,87 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function currentSeason() {
+      return get(/databases/$(database)/documents/config/app).data.currentSeason;
+    }
+
+    // App config — readable by all. Created once, then updated by the in-app
+    // "Start New Season" rollover. The update is constrained so it can only
+    // move FORWARD: currentSeason must be a 4-digit year that is >= the
+    // existing one (never rewind to unlock/edit a frozen season), and the
+    // seasons[] list may only grow (hasAll preserves every existing entry).
+    // Delete is never allowed. This is the no-auth-consistent guardrail —
+    // it limits damage to "forward only" without adding Firebase Auth.
+    match /config/{doc} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if request.resource.data.currentSeason is string
+        && request.resource.data.currentSeason.matches('[0-9]{4}')
+        && int(request.resource.data.currentSeason) >= int(resource.data.currentSeason)
+        && request.resource.data.seasons.hasAll(resource.data.seasons);
+      allow delete: if false;
+    }
+
+    // Season doc (year + roster) — roster editable only for the live season.
+    match /seasons/{season} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if season == currentSeason();
+      allow delete: if false;
+
+      // Pitcher summaries + sessions — writable only for the live season.
+      // The moment currentSeason changes, prior years become read-only:
+      // the permanent record can never be altered from a browser.
+      match /pitchers/{pitcherId} {
+        allow read: if true;
+        allow write: if season == currentSeason();
+
+        match /sessions/{sessionId} {
+          allow read: if true;
+          allow write: if season == currentSeason();
+        }
+      }
+
+      match /videos/{videoId} {
+        allow read: if true;
+        allow write: if season == currentSeason();
+      }
+
+      // v26 — MSHSL game outings for the availability board.
+      // Same season-lock as sessions: once the season rolls, history freezes.
+      match /outings/{outingId} {
+        allow read: if true;
+        allow write: if season == currentSeason();
+      }
+
+      // v26 — pop time / sprint / BP round skill sessions.
+      match /skillSessions/{skillId} {
+        allow read: if true;
+        allow write: if season == currentSeason();
+      }
+    }
+
+    // Game stats (GameChanger imports) — a cross-season, top-level
+    // record of every player's Baseball-Reference history. Reads are
+    // open; writes are gated client-side by the coach PIN (consistent
+    // with the rest of this no-auth app). Not season-locked, since a
+    // player's past statlines must stay editable across season rollovers.
+    match /players/{playerId} {
+      allow read: if true;
+      allow write: if true;
+
+      match /statlines/{lineId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+
+    // Authorize collection-group queries over statlines (the Players hub reads
+    // every team-season line in one query). A per-path rule alone does NOT
+    // grant collection-group access — this recursive-wildcard rule does.
+    match /{path=**}/statlines/{lineId} {
+      allow read: if true;
+    }
+  }
+}

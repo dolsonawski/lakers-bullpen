@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" style="--header-height: 158px;"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Lakers Bullpen</title>
+
+<!-- PWA & iOS Home Screen -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<!-- Firebase (compat build; /__/firebase/init.js auto-configures when hosted on Firebase) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js" onerror="console.warn('Firebase auto-init unavailable (expected when not on Firebase Hosting)')"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d3d78">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bullpen">
+<link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<!-- v30 launch splash — "Pitch Trace / Zone Lock". Shown once per session
+     (sessionStorage gate in the boot script below), tap-to-skip, and skipped
+     entirely under prefers-reduced-motion. Removed from the DOM after it ends. -->
+<div class="splash" id="splash" aria-hidden="true">
+  <div class="sp-zone">
+    <span class="sp-cell"></span><span class="sp-cell"></span><span class="sp-cell"></span>
+    <span class="sp-cell"></span><span class="sp-cell sp-cell-hit"></span><span class="sp-cell"></span>
+    <span class="sp-cell"></span><span class="sp-cell"></span><span class="sp-cell"></span>
+  </div>
+  <svg class="sp-trail" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="spTrailGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="rgba(166,195,230,0)"/>
+        <stop offset="0.6" stop-color="rgba(166,195,230,0.5)"/>
+        <stop offset="1" stop-color="#03b35a"/>
+      </linearGradient>
+    </defs>
+    <path class="sp-trail-path" d="M -20 60 C 110 130, 185 230, 210 360"/>
+  </svg>
+  <div class="sp-ball"></div>
+  <div class="sp-impact"></div>
+  <div class="sp-word">
+    <div class="sp-school">MINNEWASKA</div>
+    <div class="sp-main"><span class="sp-lakers">LAKERS</span><span class="sp-baseball">BASEBALL</span></div>
+    <div class="sp-bar"><span class="cb-blue"></span><span class="cb-green"></span><span class="cb-silver"></span><span class="cb-green"></span><span class="cb-blue"></span></div>
+  </div>
+</div>
+<div class="app">
+  <div class="brand-header">
+    <button class="header-gear" id="headerGear" onclick="openSettingsModal()" title="Team Settings">⚙️</button>
+    <button class="waffle-btn" id="waffleBtn" onclick="toggleWaffleMenu()" title="Switch View"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
+    <div class="waffle-menu" id="waffleMenu">
+      <button onclick="switchView(&#39;players&#39;)" id="wvPlayers" class="active-view">👥 Players</button>
+      <button onclick="switchView(&#39;tracker&#39;)" id="wvTracker" class="">⚾ Tracker</button>
+      <button onclick="switchView(&#39;sheet&#39;)" id="wvSheet" class="">🏆 Leaderboard</button>
+      <button onclick="switchView(&#39;board&#39;)" id="wvBoard" class="">🛡️ Availability</button>
+      <button onclick="openSettingsModal()" id="wvSettings" class="">⚙️ Team Settings</button>
+      <button onclick="promptInstall()" id="wvInstall" class="" style="display:none;">📲 Add to Home Screen</button>
+    </div>
+    <div class="brand-school">MINNEWASKA</div>
+    <div class="brand-main"><span class="lakers-text">LAKERS</span><span class="baseball-text">BASEBALL</span></div>
+    <div class="color-bar"><span class="cb-blue"></span><span class="cb-blue"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-silver"></span><span class="cb-silver"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-blue"></span><span class="cb-blue"></span></div>
+  </div>
+
+  <div class="view-tracker" id="viewTracker">
+  <div class="track-mode-seg" id="trackModeSeg">
+    <button data-mode="bullpen" class="on" onclick="setTrackMode('bullpen')">⚾ Bullpen</button>
+    <button data-mode="pop" onclick="setTrackMode('pop')">🧤 Pop Times</button>
+    <button data-mode="sprint" onclick="setTrackMode('sprint')">⚡ Sprints</button>
+    <button data-mode="bp" onclick="setTrackMode('bp')">🏏 BP Rounds</button>
+  </div>
+  <div id="bullpenMode">
+  <div class="info-bar-sticky">
+    <div class="info-field"><label>Pitcher</label><select id="pitcher">
+        <option value="">— Select Pitcher —</option>
+        <option value="Andrew Agre">Andrew Agre</option>
+        <option value="Brayden Agre">Brayden Agre</option>
+        <option value="Kolton Berg">Kolton Berg</option>
+        <option value="Will Blair">Will Blair</option>
+        <option value="Luke Danielson">Luke Danielson</option>
+        <option value="Jackson Danter">Jackson Danter</option>
+        <option value="Callum Disrud-Bailey">Callum Disrud-Bailey</option>
+        <option value="Brayden Erickson">Brayden Erickson</option>
+        <option value="Connor Erickson">Connor Erickson</option>
+        <option value="Sawyer Erickson">Sawyer Erickson</option>
+        <option value="Karsen Fenger">Karsen Fenger</option>
+        <option value="Gavin Flaten">Gavin Flaten</option>
+        <option value="Owen Greene">Owen Greene</option>
+        <option value="Marc Gruber">Marc Gruber</option>
+        <option value="Marshall Gruber">Marshall Gruber</option>
+        <option value="Brock Jacobs">Brock Jacobs</option>
+        <option value="Ethan Jacobs">Ethan Jacobs</option>
+        <option value="Ben Johnson">Ben Johnson</option>
+        <option value="Harley Johnson">Harley Johnson</option>
+        <option value="Logan Johnson">Logan Johnson</option>
+        <option value="Xavier Johnson">Xavier Johnson</option>
+        <option value="Cale Johnsrud">Cale Johnsrud</option>
+        <option value="Aron Majerus">Aron Majerus</option>
+        <option value="Tyson Metz">Tyson Metz</option>
+        <option value="Brody Nelson">Brody Nelson</option>
+        <option value="Marshall Nichtern">Marshall Nichtern</option>
+        <option value="Chase Radermacher">Chase Radermacher</option>
+        <option value="Braylen Scharmer">Braylen Scharmer</option>
+        <option value="AJ Svec">AJ Svec</option>
+        <option value="Tyler Swanson">Tyler Swanson</option>
+        <option value="Ben Toohey">Ben Toohey</option>
+        <option value="Jaden Vig">Jaden Vig</option>
+        <option value="Jaxson Vig">Jaxson Vig</option>
+        <option value="Miles Wildman">Miles Wildman</option>
+      </select></div>
+  </div>
+  <div class="info-bar">
+    <div class="info-field"><label>Date</label><input type="date" id="date"></div>
+    <div class="info-field"><label>Session Type</label><select id="sessionType" onchange="onSessionTypeChange()"><option value="preset">Preset Bullpen</option><option value="dynamic">Dynamic Bullpen</option><option value="game">Game</option></select></div>
+  </div>
+
+  <div class="config-panel" id="configPanel">
+    <div class="config-title">Pitch Setup</div>
+    <div class="config-row-header"><span>Pitch Type</span><span style="color:var(--stretch)">Stretch</span><span style="color:var(--windup)">Windup</span></div>
+    <div class="config-row"><div class="config-label"><span class="pip" style="background:var(--fastball)"></span>Fastball</div><div class="config-input-wrap"><span class="delivery-icon s">STR</span><input type="number" class="config-input" id="fb_s" value="9" min="0" max="99" oninput="updateTotals()"></div><div class="config-input-wrap"><span class="delivery-icon w">WND</span><input type="number" class="config-input" id="fb_w" value="5" min="0" max="99" oninput="updateTotals()"></div></div>
+    <div class="config-row"><div class="config-label"><span class="pip" style="background:var(--changeup)"></span>Changeup</div><div class="config-input-wrap"><span class="delivery-icon s">STR</span><input type="number" class="config-input" id="ch_s" value="9" min="0" max="99" oninput="updateTotals()"></div><div class="config-input-wrap"><span class="delivery-icon w">WND</span><input type="number" class="config-input" id="ch_w" value="4" min="0" max="99" oninput="updateTotals()"></div></div>
+    <div class="config-row"><div class="config-label"><span class="pip" style="background:var(--breaking-ball)"></span>Breaking Ball</div><div class="config-input-wrap"><span class="delivery-icon s">STR</span><input type="number" class="config-input" id="cb_s" value="9" min="0" max="99" oninput="updateTotals()"></div><div class="config-input-wrap"><span class="delivery-icon w">WND</span><input type="number" class="config-input" id="cb_w" value="4" min="0" max="99" oninput="updateTotals()"></div></div>
+    <div class="config-totals"><div class="total-label">Totals</div><div class="total-value stretch-total" id="totalStretch">27</div><div class="total-value windup-total" id="totalWindup">13</div></div>
+    <div class="grand-total-row"><span class="gt-label">Total Pitches</span><span class="gt-value" id="grandTotal">40</span></div>
+    <div class="config-error" id="configError"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-generate" id="btnGenerate" onclick="generateSession()">⚾ Build Session</button>
+    <button class="btn btn-randomize" id="btnRandomize" onclick="randomize()" disabled=""><span class="icon">⟳</span> Randomize</button>
+    <button class="btn btn-reset" id="btnReset" onclick="resetMarks()" disabled="">Reset</button>
+    <button class="btn btn-clear-blanks" id="btnClearBlanks" onclick="clearBlanks()" disabled="">✂ Clear Blanks</button>
+  </div>
+  <div id="sheetsButtonTop" style="display:none;padding:0 0 16px;">
+    <button class="btn-action primary full" onclick="openSheetsModal()">💾 Save Session</button>
+  </div>
+
+  <div class="rule-note" id="ruleNote">⚡ Session order: Windup (FA → BB → CH) then Stretch (FA → BB → CH) · Reps within each group are shuffled · Use Randomize to re-shuffle</div>
+
+  <div class="tracker-section" id="trackerSection">
+    <div class="summary-panel">
+      <div class="summary-section-label">Pitch Usage</div>
+      <div class="summary-by-type" id="summaryByType"></div>
+      <div class="summary-usage-row" id="summaryUsageBar" style="display:none;"></div>
+      <div class="summary-divider"></div>
+      <div class="summary-section-label">Execution</div>
+      <div class="summary-overall">
+        <div class="s-item"><div class="stat-label">Executed</div><div class="stat-value green" id="sumExec">0</div></div>
+        <div class="s-item"><div class="stat-label">Not Executed</div><div class="stat-value red" id="sumNotExec">0</div></div>
+        <div class="s-item"><div class="stat-label">Overall Rate</div><div class="stat-value blue" id="sumRate">—</div></div>
+      </div>
+      <div class="summary-exec-by-type" id="execByType" style="display:none;"></div>
+    </div>
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="location-map-panel" id="locationMapPanel" style="display:none;">
+      <div class="location-map-header">
+        <span class="location-map-title">📍 Pitch Location Map</span>
+        <div class="location-map-filters">
+          <button class="map-filter-btn active" id="mapFilterAll" onclick="setMapFilter('All')">All</button>
+          <button class="map-filter-btn" id="mapFilterFA" onclick="setMapFilter('FA')" style="color:var(--fastball);border-color:var(--fastball);">FA</button>
+          <button class="map-filter-btn" id="mapFilterCH" onclick="setMapFilter('CH')" style="color:var(--changeup);border-color:var(--changeup);">CH</button>
+          <button class="map-filter-btn" id="mapFilterBB" onclick="setMapFilter('BB')" style="color:var(--breaking-ball);border-color:var(--breaking-ball);">BB</button>
+        </div>
+      </div>
+      <div class="location-map-body">
+        <svg id="locationMapSvg" width="220" height="240" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Pitch Type</th><th>Delivery</th><th>Velo / Zone</th><th>✓</th><th>✗</th><th class="del-col">🗑</th></tr></thead>
+        <tbody id="pitchBody"></tbody>
+      </table>
+      </div>
+    <div class="add-pitch-row" id="addPitchRow" style="display:none;">
+      <span class="add-pitch-label" id="addPitchLabel">Add Pitch:</span>
+      <select class="add-pitch-select" id="addPitchType">
+        <option value="FA|fastball">FA</option>
+        <option value="CH|changeup">CH</option>
+        <option value="BB|breaking-ball">BB</option>
+      </select>
+      <select class="add-pitch-select" id="addPitchDelivery">
+        <option value="Stretch">Stretch</option>
+        <option value="Windup">Windup</option>
+      </select>
+      <button class="btn-add-pitch" id="btnAddPitch" onclick="addPitch()">+ Add</button>
+    </div>
+    <div id="sheetsButtonBottom" style="display:none;padding:16px 0 0;">
+      <button class="btn-action primary full" onclick="openSheetsModal()">💾 Save Session</button>
+    </div>
+    </div>
+
+  <div id="emptyState" class="empty-state" style="display:none;"></div>
+  </div><!-- end bullpenMode -->
+
+  <div id="skillMode" style="display:none;">
+    <div class="skill-head">
+      <div class="info-field"><label>Player</label><select id="skillPlayer"><option value="">— Select Player —</option></select></div>
+      <div class="info-field"><label>Date</label><input type="date" id="skillDate"></div>
+    </div>
+
+    <div class="skill-panel" id="popPanel" style="display:none;">
+      <div class="skill-panel-head"><span>🧤 Pop Times</span>
+        <span class="skill-tgt-seg" id="popTargetSeg"><button data-t="2B" class="on" onclick="popSetTarget('2B')">→ 2B</button><button data-t="3B" onclick="popSetTarget('3B')">→ 3B</button></span></div>
+      <div class="skill-rows" id="popRows"></div>
+      <div class="skill-actions">
+        <button class="btn-stopwatch" id="popWatch" onclick="popWatchTap()">▶ START THROW</button>
+        <button class="btn-action" onclick="popAddManual()">＋ Manual</button>
+      </div>
+      <div class="skill-summary" id="popSummary"></div>
+    </div>
+
+    <div class="skill-panel" id="sprintPanel" style="display:none;">
+      <div class="skill-panel-head"><span>⚡ Sprint Times</span>
+        <span class="skill-dist-fixed">90 ft · home → first</span></div>
+      <div class="skill-rows" id="sprintRows"></div>
+      <div class="skill-actions">
+        <button class="btn-stopwatch" id="sprintWatch" onclick="sprintWatchTap()">▶ START SPRINT</button>
+        <button class="btn-action" onclick="sprintAddManual()">＋ Manual</button>
+      </div>
+      <div class="skill-summary" id="sprintSummary"></div>
+    </div>
+
+    <div class="skill-panel" id="bpPanel" style="display:none;">
+      <div class="skill-panel-head"><span>🏏 BP Rounds</span>
+        <span class="skill-panel-tools"><button class="btn-toggle" id="bpVeloToggle" onclick="bpToggleVelo()">📡 Exit velo: off</button><button class="btn-action" onclick="bpNewRound()">＋ New Round</button></span></div>
+      <div class="skill-rows" id="bpRows"></div>
+      <div class="skill-actions bp-taps">
+        <button class="bp-tap h" onclick="bpTap('H')">HARD</button>
+        <button class="bp-tap w" onclick="bpTap('W')">WEAK</button>
+        <button class="bp-tap m" onclick="bpTap('M')">MISS</button>
+      </div>
+      <div class="skill-summary" id="bpSummary"></div>
+    </div>
+
+    <div class="skill-save">
+      <input type="password" id="skillPin" placeholder="PIN" inputmode="numeric" maxlength="4">
+      <button class="btn-action primary" onclick="saveSkillSession()">💾 Save Session</button>
+      <span class="skill-status" id="skillStatus"></span>
+    </div>
+    <div class="skill-recent" id="skillRecent"></div>
+  </div><!-- end skillMode -->
+  </div><!-- end view-tracker -->
+
+  <div class="view-sheet" id="viewSheet">
+    <div class="sheet-embed-container">
+      <div class="sheet-embed-header">
+        <div class="sheet-embed-title">🏆 Leaderboard</div>
+        <div class="sheet-embed-actions">
+          <button class="compact-toggle" id="compactToggle" onclick="toggleCompact()">▥ Compact</button>
+          <button onclick="fetchSheetData()">⟳ Refresh</button>
+          <button onclick="exportSeasonCsv()">⬇ Export CSV</button>
+        </div>
+      </div>
+
+      <div class="lb-actseg" id="lbActSeg">
+        <button data-a="bullpen" class="on" onclick="setLbActivity('bullpen')">⚾ Bullpen</button>
+        <button data-a="pop" onclick="setLbActivity('pop')">🧤 Pop Times</button>
+        <button data-a="sprint" onclick="setLbActivity('sprint')">⚡ Sprints</button>
+        <button data-a="bp" onclick="setLbActivity('bp')">🏏 BP Rounds</button>
+      </div>
+
+      <div id="lbBullpenWrap">
+
+      <div class="data-filters" id="dataFilters" style="display:none;">
+        <div class="filter-row" id="filterRow"></div>
+      </div>
+
+      <div class="data-table-wrap" style="display:none;">
+        <table class="data-table" id="dataTable">
+          <thead><tr id="dataHead"><th class="sortable">Name <span class="sort-arrow" id="sort-Name"></span></th><th class="sortable">Exec. <span class="sort-arrow desc" id="sort-Exec\."></span></th><th class="sortable">FA Avg <span class="sort-arrow" id="sort-FA\ Avg"></span></th><th class="sortable">FA Exec. <span class="sort-arrow" id="sort-FA\ Exec\."></span></th><th class="sortable">CB Avg <span class="sort-arrow" id="sort-CB\ Avg"></span></th><th class="sortable">CB Exec. <span class="sort-arrow" id="sort-CB\ Exec\."></span></th><th class="sortable">CH Avg <span class="sort-arrow" id="sort-CH\ Avg"></span></th><th class="sortable">CH Exec. <span class="sort-arrow" id="sort-CH\ Exec\."></span></th></tr></thead>
+          <tbody id="dataBody"></tbody>
+        </table>
+      </div>
+
+      <div class="data-loading" id="dataLoading" style="display:block;">
+        <div class="loading-spinner"></div>
+        <p>Loading leaderboard…</p>
+        <p class="loading-hint">Live from the team database</p>
+      </div>
+
+      <div class="data-empty" id="dataEmpty" style="display:none;">
+        <p>No data found. Export some bullpen sessions first, then tap Refresh.</p>
+      </div>
+
+      <div class="data-error" id="dataError" style="display:none;">
+        <p id="dataErrorMsg"></p>
+        <button onclick="fetchSheetData()">Retry</button>
+      </div>
+
+      </div><!-- end lbBullpenWrap -->
+
+      <div id="lbSkillsWrap" style="display:none;">
+        <div class="data-loading" id="lbSkillsLoading" style="display:none;"><div class="loading-spinner"></div><p>Loading skills…</p></div>
+        <div id="lbSkillsHost"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="view-video" id="viewVideo">
+    <div class="sheet-embed-container">
+      <div class="sheet-embed-header">
+        <div class="sheet-embed-title">🎥 Video Library</div>
+        <div class="sheet-embed-actions">
+          <button onclick="openVideoMgr()">➕ Add Video</button>
+          <button onclick="fetchVideoData()">⟳ Refresh</button>
+        </div>
+      </div>
+
+      <div class="data-filters" id="videoFilters" style="display:none;">
+        <div class="filter-row" id="videoFilterRow"></div>
+      </div>
+
+      <div class="video-list" id="videoList" style="display:none;"></div>
+
+      <div class="data-loading" id="videoLoading" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>Loading video links…</p>
+        
+      </div>
+
+      <div class="data-empty" id="videoEmpty" style="display:none;">
+        <p>No video links found.</p>
+      </div>
+
+      <div class="data-error" id="videoError" style="display:none;">
+        <p id="videoErrorMsg"></p>
+        <button onclick="fetchVideoData()">Retry</button>
+      </div>
+
+    </div>
+  </div>
+  <div class="view-players" id="viewPlayers">
+    <div class="sheet-embed-container">
+      <div class="sheet-embed-header">
+        <div class="sheet-embed-title">👥 Players</div>
+        <div class="sheet-embed-actions">
+          <button onclick="openImportModal()">⬆ Import Stats</button>
+          <button onclick="switchView('sheet')">🏆 Leaderboard</button>
+          <button onclick="loadPlayersHub(true)">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="hub-stattabs" id="hubStatTabs">
+        <button data-s="hit" class="on">🏏 Hitting</button>
+        <button data-s="pit">⚾ Pitching</button>
+        <button data-s="fld">🧤 Fielding</button>
+      </div>
+      <div class="players-filters">
+        <select class="players-year" id="playersYear" title="Season"></select>
+        <div class="pcx-seg" id="hubModeSeg">
+          <button data-m="trad" class="on">Traditional</button>
+          <button data-m="adv">Advanced</button>
+        </div>
+        <input class="players-search" id="playersSearch" placeholder="Search players…">
+        <div class="chips" id="playersLevelChips"><span class="chip on" data-team="">All Teams</span></div>
+      </div>
+      <div id="playersDrop" class="players-drop">⬆ Drop a GameChanger CSV here to import a team's season</div>
+      <div class="hub-tablewrap">
+        <table class="bref hub-table" id="playersTable" style="display:none;">
+          <thead id="playersThead"></thead><tbody id="playersTbody"></tbody><tfoot id="playersTfoot"></tfoot>
+        </table>
+      </div>
+      <div class="data-loading" id="playersLoading" style="display:block;"><div class="loading-spinner"></div><p>Loading players…</p></div>
+      <div class="data-empty" id="playersEmpty" style="display:none;"><p>No players yet — import a GameChanger stats file to get started.</p></div>
+    </div>
+  </div>
+
+  <div class="view-board" id="viewBoard">
+    <div class="sheet-embed-container">
+      <div class="sheet-embed-header">
+        <div class="sheet-embed-title">🛡️ Who can pitch today</div>
+        <div class="sheet-embed-actions">
+          <button onclick="openOutingModal()">＋ Log Outing</button>
+          <button onclick="loadBoard(true)">⟳ Refresh</button>
+        </div>
+      </div>
+      <div class="board-chips" id="boardChips"></div>
+      <div class="data-loading" id="boardLoading" style="display:none;"><div class="loading-spinner"></div><p>Checking availability…</p></div>
+      <div id="boardRows"></div>
+      <div class="board-tiers" id="boardTiers"></div>
+      <div class="board-foot" id="boardFoot"></div>
+      <div class="board-recent" id="boardRecent"></div>
+    </div>
+  </div>
+
+  <div class="view-player" id="viewPlayer">
+    <div class="sheet-embed-container">
+      <div class="player-card-top">
+        <button class="player-back-btn" onclick="closePlayerCard()">← Leaderboard</button>
+        <button class="player-share-btn" id="playerShareBtn" onclick="pcxShareReport(this)">⤴ Share report</button>
+        <button class="player-back-btn" onclick="pcAddVideo()">🎥 Add video</button>
+        <div class="player-card-name" id="playerCardName">Player</div>
+        <div class="player-card-career" id="playerCardCareer"></div>
+      </div>
+      <div class="player-card-body" id="playerCardBody">
+        <div class="data-loading" style="display:block;"><div class="loading-spinner"></div><p>Loading player history…</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .app -->
+
+<nav class="tabbar" id="tabbar">
+  <button class="tb" id="tbPlayers" onclick="switchView('players')"><span class="ic">👥</span>Players</button>
+  <button class="tb" id="tbTracker" onclick="switchView('tracker')"><span class="ic">⚾</span>Tracker</button>
+  <button class="tb" id="tbBoard" onclick="switchView('board')"><span class="ic">🛡️</span>Board</button>
+  <button class="tb" id="tbSheet" onclick="switchView('sheet')"><span class="ic">🏆</span>Leaders</button>
+</nav>
+
+<!-- Log Outing Modal -->
+<div class="modal-overlay" id="outingModal">
+  <div class="modal">
+    <div class="modal-title">Log Game Outing</div>
+    <div class="modal-subtitle">Game pitches count toward MSHSL rest rules</div>
+    <div class="modal-field"><label>Pitcher</label><select id="outingPitcher"></select></div>
+    <div class="modal-field"><label>Date</label><input type="date" id="outingDate"></div>
+    <div class="modal-field"><label>Pitches Thrown</label><input type="number" id="outingPitches" min="1" max="130" inputmode="numeric" placeholder="e.g. 68"></div>
+    <div class="modal-field"><label>PIN Code</label><input type="password" id="outingPin" placeholder="Enter PIN" inputmode="numeric" maxlength="4"></div>
+    <div class="modal-status" id="outingStatus"></div>
+    <div class="modal-actions">
+      <button class="btn-sheets-cancel" onclick="closeOutingModal()">Cancel</button>
+      <button class="btn-sheets-send" onclick="saveOuting()">Log Outing</button>
+    </div>
+  </div>
+</div>
+
+<!-- Team Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-title">Team Settings</div>
+    <div class="modal-subtitle">Coach PIN required</div>
+    <div class="modal-field" id="settingsPinField"><label>PIN Code</label><input type="password" id="settingsPin" placeholder="Enter PIN" inputmode="numeric" maxlength="4"></div>
+    <div class="modal-status" id="settingsStatus"></div>
+    <button class="btn-action full" id="settingsInstall" onclick="promptInstall()" style="display:none;margin-bottom:10px;">📲 Add to Home Screen</button>
+    <div id="settingsBody" style="display:none;">
+      <div class="settings-row">
+        <div><b>Start New Season</b><small>Rolls the app to the next year. Once a season.</small></div>
+        <button class="btn-sheets-send" onclick="closeSettingsModal();openRolloverModal();">🗓 Start…</button>
+      </div>
+      <div class="settings-row settings-rules">
+        <div style="width:100%;"><b>Pitch-count rest rules</b><small>MSHSL varsity defaults · calendar days · Bylaw 502</small>
+          <div class="rules-grid" id="rulesGrid"></div>
+          <button class="btn-action" style="margin-top:8px;" onclick="saveBoardRules()">Save Rules</button>
+          <span class="skill-status" id="rulesStatus"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sheets-cancel" onclick="closeSettingsModal()">Close</button>
+      <button class="btn-sheets-send" id="settingsUnlockBtn" onclick="unlockSettings()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Google Sheets Modal -->
+<div class="modal-overlay" id="sheetsModal">
+  <div class="modal">
+    <div class="modal-title">Save Session</div>
+    <div class="modal-subtitle">Save pitch data to the team database</div>
+    <div class="modal-field" id="sheetsUrlField">
+      <label>Apps Script Web App URL</label>
+      <div class="saved-url-wrap">
+        <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/AKfycbzebK1Avr221jSD-kZZKoUR4T7cIAaM3SiTMynpbEfe1Qv4NQjT9xjSfUPA0VTLuGvv/exec">
+        <button class="btn-clear-url" onclick="clearSheetsUrl()" title="Clear saved URL">✕</button>
+      </div>
+      <div class="hint" id="sheetsUrlHint">Paste the URL from your deployed Apps Script (saved in browser)</div>
+    </div>
+    <div class="modal-field">
+      <label>Pitcher</label>
+      <input type="text" id="sheetsPitcher" readonly="">
+    </div>
+    <div class="modal-field">
+      <label>PIN Code</label>
+      <input type="password" id="sheetsPin" placeholder="Enter PIN to send" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    </div>
+    <div class="modal-status" id="sheetsStatus"></div>
+    <div class="modal-actions" id="sheetsActions">
+      <button class="btn btn-cancel" onclick="closeSheetsModal()">Cancel</button>
+      <button class="btn btn-sheets-send" onclick="sendToSheets()">💾 Save Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add to Home Screen Modal -->
+<div class="modal-overlay" id="installModal">
+  <div class="modal smgr-modal">
+    <div class="modal-title">Add to Home Screen</div>
+    <div class="modal-subtitle">Install Lakers Bullpen like an app</div>
+    <div class="rollover-note" id="installSteps"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeInstallModal()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Season Rollover Modal -->
+<div class="modal-overlay" id="rolloverModal">
+  <div class="modal smgr-modal">
+    <div class="modal-title">Start New Season</div>
+    <div class="modal-subtitle" id="rolloverSub">Roll the tracker forward to a new year</div>
+    <div class="rollover-note">This makes the new year the active season. Exports and edits will write to it, and the current season becomes a permanent read-only archive. The current roster is carried forward — trim or add names below before starting.</div>
+    <div class="modal-field">
+      <label>PIN Code</label>
+      <input type="password" id="rolloverPin" placeholder="Coach PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    </div>
+    <div class="modal-field">
+      <label>New Season Year</label>
+      <input type="text" id="rolloverYear" placeholder="2027" maxlength="4" inputmode="numeric">
+    </div>
+    <div class="modal-field">
+      <label>Roster (one name per line)</label>
+      <textarea id="rolloverRoster" rows="8" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.8rem;padding:8px 10px;border-radius:8px;resize:vertical;"></textarea>
+    </div>
+    <div class="modal-status" id="rolloverStatus"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeRolloverModal()">Cancel</button>
+      <button class="btn btn-sheets-send" onclick="doRollover()">🗓 Start Season</button>
+    </div>
+  </div>
+</div>
+
+<!-- Session Manager Modal -->
+<div class="modal-overlay" id="smgrModal">
+  <div class="modal smgr-modal">
+    <div class="modal-title" id="smgrTitle">Manage Sessions</div>
+    <div class="modal-subtitle" id="smgrSubtitle">Edit or remove saved sessions</div>
+    <div class="modal-field">
+      <label>PIN Code (required to save changes)</label>
+      <input type="password" id="smgrPin" placeholder="Coach PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    </div>
+    <div id="smgrBody"></div>
+    <div class="modal-status" id="smgrStatus"></div>
+    <div class="modal-actions" id="smgrActions">
+      <button class="btn btn-cancel" onclick="closeSessionMgr()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Video Manager Modal -->
+<div class="modal-overlay" id="vmgrModal">
+  <div class="modal smgr-modal">
+    <div class="modal-title">Manage Videos</div>
+    <div class="modal-subtitle" id="vmgrSubtitle">Add or remove video links</div>
+    <div class="modal-field">
+      <label>PIN Code</label>
+      <input type="password" id="vmgrPin" placeholder="Coach PIN" maxlength="4" inputmode="numeric" pattern="[0-9]*" autocomplete="off">
+    </div>
+    <div class="modal-field">
+      <label>Pitcher</label>
+      <select id="vmgrPitcher" onchange="vmgrRenderExisting()"></select>
+    </div>
+    <div class="smgr-meta">
+      <div class="modal-field"><label>Date of Session</label><input type="date" id="vmgrDate"></div>
+      <div class="modal-field"><label>&nbsp;</label><button class="btn btn-sheets-send" style="width:100%;" onclick="vmgrAdd()">➕ Add Link</button></div>
+    </div>
+    <div class="modal-field">
+      <label>Google Drive Link</label>
+      <input type="text" id="vmgrUrl" placeholder="https://drive.google.com/file/d/…">
+      <div class="hint">In Drive: right-click the clip → Share → "Anyone with the link" → Copy link</div>
+    </div>
+    <div id="vmgrExisting"></div>
+    <div class="modal-status" id="vmgrStatus"></div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeVideoMgr()">Close</button>
+    </div>
+  </div>
+</div>
+
+<button class="back-to-top" id="backToTop" onclick="scrollToTop()" title="Back to top">↑</button>
+<div class="toast" id="toast">Loaded 19 entries</div>
+
+<script src="app.js"></script>
+<script src="firebase-data-layer.js"></script>
+<script src="gamechanger-import.js"></script>
+<script src="player-stats.js"></script>
+<script>
+/* v30 splash controller. Runs once per browser session. The wordmark end-state
+   matches .brand-header, so the splash dissolves into an identical header.
+   - Skipped if already shown this session (sessionStorage).
+   - Skipped under prefers-reduced-motion (accessibility).
+   - Tap/click/key anywhere skips the rest of the sequence immediately.
+   - Element is removed from the DOM once done so it never intercepts taps. */
+(function(){
+  var splash=document.getElementById('splash');
+  if(!splash) return;
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var seen=false;
+  try{ seen=sessionStorage.getItem('lb_splash_seen')==='1'; }catch(e){}
+  if(seen||reduce){ splash.parentNode&&splash.parentNode.removeChild(splash); return; }
+  try{ sessionStorage.setItem('lb_splash_seen','1'); }catch(e){}
+
+  document.body.classList.add('splash-lock'); // prevent scroll under the splash
+  var finished=false;
+  function finish(){
+    if(finished) return; finished=true;
+    splash.classList.add('sp-done');
+    document.body.classList.remove('splash-lock');
+    setTimeout(function(){ splash.parentNode&&splash.parentNode.removeChild(splash); },500);
+  }
+  // Total sequence runs ~3.6s; hand off to the app just after.
+  var timer=setTimeout(finish,3650);
+  function skip(){ clearTimeout(timer); finish(); }
+  splash.addEventListener('click',skip);
+  splash.addEventListener('touchstart',skip,{passive:true});
+  window.addEventListener('keydown',skip,{once:true});
+})();
+
+/* #9 — register the service worker for offline shell + home-screen install.
+   Only on https (Firebase Hosting); silently skipped on file:// local opens. */
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+  // When an updated service worker takes control, reload once so the newest
+  // app.js/styles.css are shown immediately instead of a stale cached build.
+  var swRefreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(swRefreshing) return; swRefreshing=true; window.location.reload();
+  });
+}
+</script>
+</body></html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lakers Bullpen — 2026 Migration</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="/__/firebase/init.js" onerror="console.warn('auto-init unavailable')"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--royal:#0047AB;--royal-dark:#003080;--royal-deep:#001f52;--green:#00994D;
+--bg:#071225;--surface:#0c1e3a;--surface2:#112a4d;--border:#1c3a66;
+--text:#e8ecf1;--text-dim:#7a96b8;--silver-light:#C8D0D8;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 60px;}
+.wrap{max-width:680px;margin:0 auto;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:0.04em;text-align:center;
+background:linear-gradient(135deg,var(--royal-dark),var(--royal-deep));border:1px solid var(--border);
+border-radius:12px;padding:18px;margin-bottom:18px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.card h2{font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:0.05em;margin-bottom:10px;color:var(--silver-light);}
+label{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-dim);margin:10px 0 4px;}
+input,select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+font-family:'DM Sans',sans-serif;font-size:0.85rem;padding:9px 10px;border-radius:8px;}
+.check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:0.8rem;color:var(--text-dim);}
+.check input{width:auto;}
+button.go{width:100%;margin-top:16px;background:linear-gradient(135deg,#0F9D58,#0B8043);color:#fff;border:none;
+border-radius:8px;padding:13px;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;
+letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;}
+button.go:disabled{opacity:0.45;cursor:default;}
+.log{background:#040b18;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:14px;
+font-family:'IBM Plex Mono',monospace;font-size:0.68rem;line-height:1.7;max-height:340px;overflow-y:auto;white-space:pre-wrap;display:none;}
+.log .ok{color:#00c964;}.log .err{color:#ef4444;}.log .info{color:var(--text-dim);}.log .head{color:var(--silver-light);font-weight:600;}
+.note{font-size:0.74rem;color:var(--text-dim);line-height:1.55;}
+.note b{color:var(--silver-light);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>⚾ 2026 SEASON MIGRATION</h1>
+
+  <div class="card">
+    <h2>What this does</h2>
+    <p class="note">One-time copy of the <b>2026 season</b> out of the Google Sheet (via your existing
+    Apps Script) into the team's Firebase database: roster, every bullpen/game session for every
+    pitcher, and all video links. Your spreadsheet is never modified — it stays as the permanent
+    archive. Safe to re-run: pitchers already migrated are skipped unless you check Overwrite.</p>
+  </div>
+
+  <div class="card">
+    <h2>Run it</h2>
+    <label>Apps Script URL (source of the 2026 data)</label>
+    <input type="text" id="gasUrl" value="https://script.google.com/macros/s/AKfycbzebK1Avr221jSD-kZZKoUR4T7cIAaM3SiTMynpbEfe1Qv4NQjT9xjSfUPA0VTLuGvv/exec">
+    <label>Season</label>
+    <input type="text" id="season" value="2026">
+    <label>PIN</label>
+    <input type="password" id="pin" maxlength="4" inputmode="numeric" placeholder="Coach PIN">
+    <div class="check"><input type="checkbox" id="overwrite"><span>Overwrite — delete and re-import pitchers that already have sessions</span></div>
+    <button class="go" id="btnGo" onclick="runMigration()">▶ Start Migration</button>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script src="seed-data.js"></script>
+<script>
+'use strict';
+
+/* ── Logging ── */
+const logEl = document.getElementById('log');
+function log(msg, cls) {
+  logEl.style.display = 'block';
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+/* ── JSONP to the Apps Script (read-only source) ── */
+function gasJsonp(baseUrl, params, timeoutMs) {
+  return new Promise(function (resolve, reject) {
+    const cb = '_mig_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const t = setTimeout(function () { cleanup(); reject(new Error('Request timed out')); }, timeoutMs || 90000);
+    function cleanup() {
+      try { delete window[cb]; } catch (e) {}
+      const el = document.getElementById(cb);
+      if (el) el.remove();
+      clearTimeout(t);
+    }
+    window[cb] = function (data) { cleanup(); resolve(data); };
+    const qs = Object.entries(params).map(([k, v]) => encodeURIComponent(k) + '=' + encodeURIComponent(v)).join('&');
+    const s = document.createElement('script');
+    s.id = cb;
+    s.src = baseUrl + '?' + qs + '&callback=' + cb;
+    s.onerror = function () { cleanup(); reject(new Error('Could not reach Apps Script')); };
+    document.head.appendChild(s);
+  });
+}
+
+/* ── Name + stat helpers (mirror firebase-data-layer.js) ── */
+function toFirstLast(n) {
+  n = String(n).trim();
+  if (n.indexOf(',') === -1) return n;
+  const p = n.split(',');
+  return p[1].trim() + ' ' + p[0].trim();
+}
+function docId(n) { return String(n).trim().replace(/[^a-zA-Z0-9]+/g, '_'); }
+function normType(t) { const u = String(t || '').trim().toUpperCase(); return u === 'CB' ? 'BB' : u; }
+function isExecuted(r) { const s = String(r || '').toLowerCase(); return s.includes('exec') && !s.includes('not'); }
+function newAgg() { return { e: 0, t: 0, spdSum: 0, spdN: 0, count: 0 }; }
+function addAgg(a, p) {
+  a.count++;
+  const r = String(p.result || '');
+  if (r) { a.t++; if (isExecuted(r)) a.e++; }
+  const v = parseFloat(p.velo);
+  if (!isNaN(v) && v > 0) { a.spdSum += v; a.spdN++; }
+}
+function pct(e, t) { return t > 0 ? Math.round(e / t * 1000) / 10 : 0; }
+function avg(s, n) { return n > 0 ? Math.round(s / n * 10) / 10 : 0; }
+function computeSummary(name, pitches) {
+  const by = { FA: newAgg(), BB: newAgg(), CH: newAgg() }, tot = newAgg();
+  pitches.forEach(p => {
+    const t = normType(p.pitchType);
+    if (!by[t]) return;
+    addAgg(by[t], p); addAgg(tot, p);
+  });
+  return {
+    name: name,
+    exec: pct(tot.e, tot.t),
+    faAvg: avg(by.FA.spdSum, by.FA.spdN), faExec: pct(by.FA.e, by.FA.t),
+    cbAvg: avg(by.BB.spdSum, by.BB.spdN), cbExec: pct(by.BB.e, by.BB.t),
+    chAvg: avg(by.CH.spdSum, by.CH.spdN), chExec: pct(by.CH.e, by.CH.t),
+    faCount: by.FA.count, cbCount: by.BB.count, chCount: by.CH.count,
+    totalPitches: tot.count,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+}
+
+/* ── Migration ── */
+async function runMigration() {
+  const btn = document.getElementById('btnGo');
+  if (document.getElementById('pin').value.trim() !== '2149') { log('✗ Incorrect PIN', 'err'); return; }
+  const gasUrl = document.getElementById('gasUrl').value.trim();
+  const season = document.getElementById('season').value.trim();
+  const overwrite = document.getElementById('overwrite').checked;
+  if (!gasUrl.startsWith('https://script.google.com/')) { log('✗ Enter a valid Apps Script URL', 'err'); return; }
+  if (!/^\d{4}$/.test(season)) { log('✗ Season must be a 4-digit year', 'err'); return; }
+
+  btn.disabled = true;
+  logEl.innerHTML = '';
+
+  try {
+    if (typeof firebase === 'undefined' || !firebase.apps.length) {
+      throw new Error('Firebase not initialized — this page must be opened on your Firebase Hosting site');
+    }
+    const db = firebase.firestore();
+    const seasonRef = db.collection('seasons').doc(season);
+
+    /* Step 1 — config + roster */
+    log('STEP 1 · Config & roster', 'head');
+    const cfgRef = db.collection('config').doc('app');
+    const cfg = await cfgRef.get();
+    if (!cfg.exists) {
+      await cfgRef.set({ currentSeason: season, seasons: [season] });
+      log('  ✓ Created config/app (currentSeason: ' + season + ')', 'ok');
+    } else {
+      const c = cfg.data();
+      const seasons = (c.seasons || []).map(String);
+      if (!seasons.includes(season)) {
+        await cfgRef.set({ seasons: firebase.firestore.FieldValue.arrayUnion(season) }, { merge: true });
+        log('  ✓ Added ' + season + ' to season list', 'ok');
+      } else {
+        log('  · config/app already set (currentSeason: ' + c.currentSeason + ')', 'info');
+      }
+    }
+    await seasonRef.set({ year: season, roster: window.SEED_ROSTER }, { merge: true });
+    log('  ✓ Roster seeded: ' + window.SEED_ROSTER.length + ' pitchers', 'ok');
+
+    /* Step 2 — videos (live from GAS, embedded fallback) */
+    log('STEP 2 · Video library', 'head');
+    let videoGroups = window.SEED_VIDEOS;
+    try {
+      const vj = await gasJsonp(gasUrl, { action: 'fetch_videos' }, 60000);
+      if (vj.success && vj.data && vj.data.length) {
+        videoGroups = vj.data;
+        log('  · Pulled live from Apps Script', 'info');
+      } else {
+        log('  · Using embedded snapshot', 'info');
+      }
+    } catch (e) {
+      log('  · Apps Script unreachable for videos — using embedded snapshot', 'info');
+    }
+    let clipCount = 0;
+    for (const g of videoGroups) {
+      const name = toFirstLast(g.name);
+      const vids = (g.videos || []).filter(v => v.url);
+      clipCount += vids.length;
+      await seasonRef.collection('videos').doc(docId(name)).set({ name: name, videos: vids });
+    }
+    log('  ✓ ' + videoGroups.length + ' pitchers, ' + clipCount + ' video links', 'ok');
+
+    /* Step 3 — sessions per pitcher */
+    log('STEP 3 · Session data (this is the slow part — Apps Script is doing the reading)', 'head');
+    const all = await gasJsonp(gasUrl, { action: 'fetch_all' }, 120000);
+    if (!all.success) throw new Error('fetch_all failed: ' + (all.error || 'unknown'));
+    const nameKey = (all.headers && all.headers[0]) || 'Name';
+    const names = (all.data || []).map(d => String(d[nameKey] || '').trim()).filter(Boolean);
+    log('  · Found ' + names.length + ' pitchers on the leaderboard', 'info');
+
+    let migrated = 0, skipped = 0, empty = 0;
+    for (const rawName of names) {
+      const name = toFirstLast(rawName);
+      const pRef = seasonRef.collection('pitchers').doc(docId(name));
+
+      const existing = await pRef.collection('sessions').limit(1).get();
+      if (!existing.empty && !overwrite) {
+        log('  · ' + name + ' — already migrated, skipped', 'info');
+        skipped++;
+        continue;
+      }
+      if (!existing.empty && overwrite) {
+        const oldDocs = await pRef.collection('sessions').get();
+        for (const d of oldDocs.docs) await d.ref.delete();
+        log('  · ' + name + ' — cleared ' + oldDocs.size + ' old sessions', 'info');
+      }
+
+      const pj = await gasJsonp(gasUrl, { action: 'fetch_player', pitcher: rawName }, 90000);
+      if (!pj.success) { log('  ✗ ' + name + ' — fetch failed: ' + (pj.error || ''), 'err'); continue; }
+      const rows = (pj.data || []).filter(r => r.date && String(r.date).trim());
+      if (!rows.length) { empty++; continue; }
+
+      // Group pitch rows by date → one session doc per date
+      const byDate = {};
+      rows.forEach(r => {
+        const d = String(r.date).trim();
+        (byDate[d] = byDate[d] || []).push({
+          number: r.num || 0,
+          pitchType: normType(r.type),
+          delivery: r.delivery || '',
+          velo: r.velo || '',
+          zone: r.zone || '',
+          result: r.exec || ''
+        });
+      });
+
+      const allPitches = [];
+      for (const [date, pitches] of Object.entries(byDate)) {
+        await pRef.collection('sessions').add({
+          date: date,
+          sessionType: 'Bullpen',
+          season: season,
+          pitches: pitches,
+          migratedFrom: 'GAS 2026 sheet',
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        allPitches.push(...pitches);
+      }
+      await pRef.set(computeSummary(name, allPitches));
+      migrated++;
+      log('  ✓ ' + name + ' — ' + Object.keys(byDate).length + ' sessions, ' + allPitches.length + ' pitches', 'ok');
+    }
+
+    log('', 'info');
+    log('DONE · ' + migrated + ' migrated, ' + skipped + ' skipped, ' + empty + ' had no data', 'head');
+    log('Open the app and use the Season dropdown to confirm the ' + season + ' data looks right.', 'ok');
+  } catch (e) {
+    log('✗ ' + e.message, 'err');
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
