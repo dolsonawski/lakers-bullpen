@@ -244,8 +244,9 @@
     document.getElementById('gcMatchMeta').textContent =
       p.length + ' players · ' + counts.exact + ' matched · ' + counts.fuzzy + ' fuzzy · ' + counts['new'] + ' new';
 
+    var esc = window.escapeHtml || function (s) { return String(s == null ? '' : s); };
     var optsFor = function (sel) {
-      return roster.map(function (r) { return '<option value="' + r + '"' + (r === sel ? ' selected' : '') + '>' + r + '</option>'; }).join('');
+      return roster.map(function (r) { return '<option value="' + esc(r) + '"' + (r === sel ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('');
     };
     var rowsHtml = p.map(function (pl, i) {
       var mt = IMP.matches[i];
@@ -254,9 +255,9 @@
           : '<span class="gc-ms new">＋ new</span>';
       var sides = (pl.bat ? 'B' : '') + (pl.pit ? 'P' : '') + (pl.fld ? 'F' : '');
       var sel = '<select class="gc-msel" data-i="' + i + '">' +
-        '<option value="__new__"' + (mt.status === 'new' ? ' selected' : '') + '>＋ Add "' + pl.name + '"</option>' +
+        '<option value="__new__"' + (mt.status === 'new' ? ' selected' : '') + '>＋ Add "' + esc(pl.name) + '"</option>' +
         optsFor(mt.match) + '</select>';
-      return '<div class="gc-mrow"><div class="gc-gcname">' + pl.name + (pl.number ? ' <span class="gc-num">#' + pl.number + '</span>' : '') +
+      return '<div class="gc-mrow"><div class="gc-gcname">' + esc(pl.name) + (pl.number ? ' <span class="gc-num">#' + esc(pl.number) + '</span>' : '') +
         ' <span class="gc-sides">' + sides + '</span></div><div class="gc-msel-wrap">' + sel + '</div>' + badge + '</div>';
     }).join('');
     document.getElementById('gcMatchWrap').innerHTML = rowsHtml;

@@ -67,7 +67,7 @@
     hit: { trad: ['G', 'PA', 'AB', 'R', 'H', '2B', '3B', 'HR', 'RBI', 'BB', 'SO', 'SB', 'AVG', 'OBP', 'SLG', 'OPS'],
            adv: ['G', 'PA', 'BB%', 'K%', 'BB/K', 'ISO', 'C%', 'QAB%', 'BABIP', 'PS/PA', 'OPS'] },
     pit: { trad: ['G', 'GS', 'IP', 'W', 'L', 'SV', 'H', 'R', 'ER', 'BB', 'SO', 'HR', 'ERA', 'WHIP'],
-           adv: ['IP', 'K%', 'BB%', 'K-BB%', 'K/9', 'BB/9', 'FIP', 'BAA', 'Strike%', 'Whiff%', 'WHIP'] },
+           adv: ['IP', 'K%', 'BB%', 'K-BB%', 'K/9', 'BB/9', 'FIP', 'BAA', 'Strike%', 'SM%', 'WHIP'] },
     fld: { trad: ['Pos', 'INN', 'TC', 'PO', 'A', 'E', 'DP', 'FPCT'],
            adv: ['Pos', 'INN', 'TC', 'PO', 'A', 'E', 'DP', 'FPCT'] }
   };
@@ -79,7 +79,7 @@
      Counting stats are absent here, so they never get colored. */
   var RATE_DIR = {
     hit: { 'AVG': 1, 'OBP': 1, 'SLG': 1, 'OPS': 1, 'ISO': 1, 'BB%': 1, 'K%': -1, 'BB/K': 1, 'C%': 1, 'QAB%': 1, 'BABIP': 1, 'PS/PA': 1 },
-    pit: { 'ERA': -1, 'WHIP': -1, 'K%': 1, 'BB%': -1, 'K-BB%': 1, 'K/9': 1, 'BB/9': -1, 'FIP': -1, 'BAA': -1, 'Strike%': 1, 'Whiff%': 1 },
+    pit: { 'ERA': -1, 'WHIP': -1, 'K%': 1, 'BB%': -1, 'K-BB%': 1, 'K/9': 1, 'BB/9': -1, 'FIP': -1, 'BAA': -1, 'Strike%': 1, 'SM%': 1 },
     fld: { 'FPCT': 1 }
   };
   function statNum(v) { var f = parseFloat(String(v).replace('%', '')); return isFinite(f) ? f : null; }
@@ -406,7 +406,7 @@
 
     var hints = {
       hit: { trad: 'Standard box score · one row per level & year', adv: 'Rate stats — Swing% isn’t in the export, so Contact% (C%) + QAB% stand in' },
-      pit: { trad: 'Game results · one row per level & year — bullpen work folds in below', adv: 'FIP, K%, BB%, BAA from GameChanger — CSW% left out; Strike% + Whiff% stand in' },
+      pit: { trad: 'Game results · one row per level & year — bullpen work folds in below', adv: 'FIP, K%, BB%, BAA from GameChanger — CSW% left out; Strike% + SM% stand in' },
       fld: { trad: 'Fielding line per year · positions & catching below', adv: 'Fielding line per year · positions & catching below' }
     };
     document.getElementById('pcxHint').textContent = hints[pcTab][pcMode];
@@ -435,7 +435,7 @@
     if (!vids.length) return '';
     var items = vids.map(function (v) {
       var meta = [v.date, v.season].filter(Boolean).join(' · ');
-      return '<a class="pcx-vid" href="' + v.url + '" target="_blank" rel="noopener">▶ Video' + (meta ? ' <span class="vd">' + meta + '</span>' : '') + '</a>';
+      return '<a class="pcx-vid" href="' + safeHref(v.url) + '" target="_blank" rel="noopener">▶ Video' + (meta ? ' <span class="vd">' + escapeHtml(meta) + '</span>' : '') + '</a>';
     }).join('');
     return '<div class="pc-section"><div class="pc-section-title">🎥 Video</div><div class="pcx-vids">' + items + '</div></div>';
   }
@@ -552,7 +552,7 @@
     { k: 'K%', dir: 1, get: function (l) { var p = l.pit; return n(p.BF) ? n(p.SO) / n(p.BF) * 100 : null; }, fmt: function (v) { return v.toFixed(0) + '%'; } },
     { k: 'K-BB%', dir: 1, get: function (l) { var p = l.pit; return n(p.BF) ? (n(p.SO) - n(p.BB)) / n(p.BF) * 100 : null; }, fmt: function (v) { return v.toFixed(0) + '%'; } },
     { k: 'BB%', dir: -1, get: function (l) { var p = l.pit; return n(p.BF) ? n(p.BB) / n(p.BF) * 100 : null; }, fmt: function (v) { return v.toFixed(0) + '%'; } },
-    { k: 'Whiff%', dir: 1, get: function (l) { return _r(l.pit.SMp); }, fmt: function (v) { return v.toFixed(0) + '%'; } },
+    { k: 'SM%', dir: 1, get: function (l) { return _r(l.pit.SMp); }, fmt: function (v) { return v.toFixed(0) + '%'; } },
     { k: 'Strike%', dir: 1, get: function (l) { return _r(l.pit.Sp); }, fmt: function (v) { return v.toFixed(0) + '%'; } }
   ];
 
@@ -668,8 +668,8 @@
     var area = 'M' + pts[0][0].toFixed(1) + ',' + (H - PAD) + ' L' + line.split(' ').join(' L') + ' L' + pts[pts.length - 1][0].toFixed(1) + ',' + (H - PAD) + ' Z';
     var last = pts[pts.length - 1], first = fin[0], lastV = fin[fin.length - 1], delta = lastV - first;
     var improved = s.lb ? (delta < 0) : (delta > 0);
-    var stroke = improved ? '#00c964' : '#e8624a';
-    var fill = improved ? 'rgba(0,201,100,0.14)' : 'rgba(232,98,74,0.12)';
+    var stroke = improved ? cssVar('--stretch', '#00c964') : cssVar('--not-executed', '#ef4444');
+    var fill = improved ? 'rgba(0,201,100,0.14)' : 'rgba(239,68,68,0.12)';
     var dtxt = (delta >= 0 ? '+' : '\u2212') + s.fmt(Math.abs(delta));
     return '<div class="spark"><div class="sk">' + s.k + '</div>' +
       '<div class="sv">' + s.fmt(lastV) + '<span class="dlt ' + (improved ? 'up' : 'down') + '">' + dtxt + '</span></div>' +

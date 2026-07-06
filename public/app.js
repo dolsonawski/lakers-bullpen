@@ -2,6 +2,16 @@ let pitches=[],marks=[],sessionActive=false;
 const SHEETS_URL_KEY='bullpen_tracker_sheets_url';
 const DEFAULT_SHEETS_URL='https://script.google.com/macros/s/AKfycbzebK1Avr221jSD-kZZKoUR4T7cIAaM3SiTMynpbEfe1Qv4NQjT9xjSfUPA0VTLuGvv/exec';
 
+// Shared string-safety helpers — anything sourced from Firestore or a CSV
+// import (player names, video URLs) must pass through these before landing
+// in innerHTML, since writes to those collections aren't PIN-checked at the
+// database level (see firestore.rules) and could carry a crafted payload.
+const HTML_ESCAPES={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+function escapeHtml(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>HTML_ESCAPES[c]);}
+function safeHref(url){const u=String(url==null?'':url).trim();return /^https?:\/\//i.test(u)?escapeHtml(u):'#';}
+window.escapeHtml=escapeHtml;
+window.safeHref=safeHref;
+
 function getVal(id){return Math.max(0,parseInt(document.getElementById(id).value)||0);}
 function updateTotals(){const s=getVal('fb_s')+getVal('ch_s')+getVal('cb_s'),w=getVal('fb_w')+getVal('ch_w')+getVal('cb_w');document.getElementById('totalStretch').textContent=s;document.getElementById('totalWindup').textContent=w;document.getElementById('grandTotal').textContent=s+w;document.getElementById('configError').textContent=(s+w===0)?'Add at least 1 pitch':'';document.getElementById('btnGenerate').disabled=(s+w===0);}
 
@@ -1354,12 +1364,12 @@ function renderVideoList(){
     const linksHtml=d.videos.map(v=>{
       const dateDisplay=normDateKey(v.date)||v.date;
       if(v.url){
-        return `<a class="video-link" href="${v.url}" target="_blank" rel="noopener"><span class="vl-icon">▶</span>${dateDisplay}</a>`;
+        return `<a class="video-link" href="${safeHref(v.url)}" target="_blank" rel="noopener"><span class="vl-icon">▶</span>${escapeHtml(dateDisplay)}</a>`;
       }else{
-        return `<span class="video-link" style="opacity:0.5;cursor:default;" title="No link found"><span class="vl-icon">○</span>${dateDisplay}</span>`;
+        return `<span class="video-link" style="opacity:0.5;cursor:default;" title="No link found"><span class="vl-icon">○</span>${escapeHtml(dateDisplay)}</span>`;
       }
     }).join('');
-    card.innerHTML=`<div class="video-card-name">${d.name}</div><div class="video-links">${linksHtml}</div>`;
+    card.innerHTML=`<div class="video-card-name">${escapeHtml(d.name)}</div><div class="video-links">${linksHtml}</div>`;
     list.appendChild(card);
   });
 
@@ -1402,19 +1412,6 @@ function buildNameVariants(pitcherName){
   }
   return names;
 }
-
-function findVideoUrl(pitcherName, dateStr){
-  if(!videoDataFlat||!videoDataFlat.length) return'';
-  const namesToTry=buildNameVariants(pitcherName);
-  const nd=normDateKey(dateStr);
-  for(const v of videoDataFlat){
-    const vName=String(v.pitcher||v.name||'').trim();
-    if(!namesToTry.some(n=>normName(n)===normName(vName))) continue;
-    if(normDateKey(v.date)===nd && v.url) return v.url;
-  }
-  return'';
-}
-
 
 /* Per-pitch-type colors for the density heat maps below. */
 const HEAT_TYPES=[['FA','Fastball','--fastball'],['BB','Breaking','--breaking-ball'],['CH','Change','--changeup']];
@@ -2626,7 +2623,7 @@ async function ensureSkillPlayers(){
   try{
     const res=await gasCall(null,{action:'fetch_players_hub'});
     if(res&&res.success&&res.data&&res.data.length){
-      sel.innerHTML='<option value="">— Select Player —</option>'+res.data.map(p=>'<option value="'+p.name+'">'+p.name+'</option>').join('');
+      sel.innerHTML='<option value="">— Select Player —</option>'+res.data.map(p=>'<option value="'+escapeHtml(p.name)+'">'+escapeHtml(p.name)+'</option>').join('');
       return;
     }
   }catch(e){}
