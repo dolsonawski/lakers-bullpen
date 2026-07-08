@@ -877,51 +877,48 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
 .sk-note{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--dim);line-height:1.6;margin-top:9px;padding-top:8px;border-top:1px solid rgba(28,58,102,.4);}
 
 /* ============================================================
-   v30 LAUNCH SPLASH — "Pitch Trace / Zone Lock"
-   Strike-zone builds → ball tracks in on a comet trail →
-   impact ripple flashes the center cell → LAKERS BASEBALL
-   wordmark + district bar resolve → fades to the app.
-   Once per session; skipped under reduced-motion (see index.html).
+   v33 LAUNCH SPLASH — "Seam Trace"
+   A giant line-art baseball rotates slowly behind the block M
+   crest + LAKERS BASEBALL wordmark while red stitches sew on
+   along the seams as the loading meter. Gated on the Players
+   hub fetch (see the boot controller in index.html): min dwell
+   2.9s, holds until data is ready, 8s cap.
+   Once per session; skipped under reduced-motion.
    ============================================================ */
-.splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(120% 90% at 50% 8%,#0a2745 0%,#040e1a 60%);overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(100% 100% at 50% 40%,#0a2036 0%,#050d17 70%);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .splash.sp-done{animation:spStageOut 0.45s ease-in forwards;}
-@keyframes spStageOut{to{opacity:0;visibility:hidden;}}
+@keyframes spStageOut{to{opacity:0;visibility:hidden;transform:translateY(-26px);}}
 
-.sp-zone{position:absolute;top:44%;left:50%;transform:translate(-50%,-58%);width:150px;height:190px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:3px;}
-.sp-cell{border:1px solid rgba(166,195,230,0.3);border-radius:3px;background:rgba(16,77,151,0.12);opacity:0;transform:scale(0.6);animation:spCellIn 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards;}
-.sp-cell:nth-child(1){animation-delay:0.25s;}.sp-cell:nth-child(2){animation-delay:0.32s;}
-.sp-cell:nth-child(3){animation-delay:0.39s;}.sp-cell:nth-child(4){animation-delay:0.46s;}
-.sp-cell:nth-child(5){animation-delay:0.53s;}.sp-cell:nth-child(6){animation-delay:0.60s;}
-.sp-cell:nth-child(7){animation-delay:0.67s;}.sp-cell:nth-child(8){animation-delay:0.74s;}
-.sp-cell:nth-child(9){animation-delay:0.81s;}
-@keyframes spCellIn{to{opacity:1;transform:scale(1);}}
+.sp-ballwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.sp-ball{width:165vmin;height:165vmin;flex:none;animation:spSpin 90s linear infinite;opacity:0.9;}
+@keyframes spSpin{to{transform:rotate(360deg);}}
+.sp-orb{fill:none;stroke:rgba(166,195,230,0.16);stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 1.1s ease-out 0.1s forwards;}
+.sp-seam{fill:none;stroke:rgba(166,195,230,0.28);stroke-width:1.4;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 0.9s ease-out forwards;}
+.sp-s1{animation-delay:0.35s;}
+.sp-s2{animation-delay:0.55s;}
+@keyframes spDraw{to{stroke-dashoffset:0;}}
+.sp-stitch{stroke:var(--pc-fa,#e84545);stroke-width:3.2;stroke-linecap:round;opacity:0;transition:opacity 0.18s ease-out;}
+.sp-stitch.lit{opacity:0.95;}
+.sp-stitch.tip{filter:drop-shadow(0 0 6px rgba(232,69,69,0.9));animation:spTip 0.9s ease-in-out infinite;}
+@keyframes spTip{0%,100%{opacity:0.95;}50%{opacity:0.4;}}
 
-.sp-trail{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:2;}
-.sp-trail-path{fill:none;stroke:url(#spTrailGrad);stroke-width:3;stroke-linecap:round;stroke-dasharray:520;stroke-dashoffset:520;opacity:0;animation:spTrail 0.5s cubic-bezier(0.5,0,0.9,0.4) 1.25s forwards,spTrailFade 0.9s ease-out 1.8s forwards;}
-@keyframes spTrail{0%{stroke-dashoffset:520;opacity:1;}100%{stroke-dashoffset:0;opacity:1;}}
-@keyframes spTrailFade{to{opacity:0.15;}}
+.sp-crest{width:min(130px,30vw);display:block;margin:0 auto 16px;opacity:0;position:relative;z-index:5;animation:spCrest 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.45s forwards;filter:drop-shadow(0 6px 22px rgba(0,0,0,0.55));}
+@keyframes spCrest{from{opacity:0;transform:scale(0.7) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
-.sp-ball{position:absolute;width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#cfd8e3 55%,#9aa7b5);box-shadow:0 0 14px rgba(255,255,255,0.7);top:7%;left:-8%;opacity:0;z-index:3;animation:spPitch 0.5s cubic-bezier(0.5,0,0.9,0.4) 1.25s forwards;}
-@keyframes spPitch{0%{opacity:1;top:6%;left:-6%;transform:scale(0.45);}100%{opacity:1;top:calc(44% - 22px);left:calc(50% + 16px);transform:scale(1);}}
-
-.sp-impact{position:absolute;top:calc(44% - 15px);left:calc(50% + 16px);width:12px;height:12px;border-radius:50%;border:2px solid var(--green,#028342);opacity:0;transform:translate(-50%,-50%) scale(0.3);z-index:2;animation:spImpact 0.55s ease-out 1.72s forwards;}
-@keyframes spImpact{0%{opacity:1;transform:translate(-50%,-50%) scale(0.3);}100%{opacity:0;transform:translate(-50%,-50%) scale(5);}}
-.sp-cell-hit{animation:spCellIn 0.28s cubic-bezier(0.34,1.56,0.64,1) 0.53s forwards,spCellHit 0.4s ease-out 1.75s forwards;}
-@keyframes spCellHit{0%{background:rgba(3,179,90,0.7);box-shadow:0 0 18px rgba(3,179,90,0.8);}100%{background:rgba(3,179,90,0.28);box-shadow:0 0 8px rgba(3,179,90,0.3);}}
-
-.sp-word{position:absolute;bottom:27%;left:0;right:0;text-align:center;}
-.sp-school{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.45em;color:var(--royal-light,#A6C3E6);opacity:0;animation:spFade 0.35s ease-out 2.15s forwards;}
-.sp-main{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:0.09em;line-height:1.1;color:#fff;opacity:0;position:relative;overflow:hidden;display:inline-block;padding:0 6px;margin-top:4px;animation:spFade 0.01s 2.3s forwards;}
+.sp-word{text-align:center;position:relative;z-index:5;opacity:0;animation:spFadeUp 0.6s ease-out 1.15s forwards;}
+@keyframes spFadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.sp-school{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.45em;color:var(--royal-light,#A6C3E6);}
+.sp-main{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:0.09em;line-height:1.1;color:#fff;margin-top:4px;}
 .sp-main .sp-lakers{color:#fff;}
 .sp-main .sp-baseball{color:var(--royal-light,#A6C3E6);margin-left:9px;}
-.sp-main::after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-50%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.55),transparent);animation:spShine 0.7s ease-out 2.35s forwards;}
-@keyframes spShine{to{left:120%;}}
-.sp-bar{display:flex;height:4px;width:180px;margin:13px auto 0;border-radius:2px;overflow:hidden;opacity:0;animation:spFade 0.01s 2.75s forwards;}
+.sp-bar{display:flex;height:4px;width:180px;margin:13px auto 0;border-radius:2px;overflow:hidden;}
 .sp-bar span{flex:1;transform:scaleY(0);transform-origin:bottom;animation:spBarPop 0.25s ease-out forwards;}
-.sp-bar span:nth-child(1){animation-delay:2.75s;}.sp-bar span:nth-child(2){animation-delay:2.8s;}
-.sp-bar span:nth-child(3){animation-delay:2.85s;}.sp-bar span:nth-child(4){animation-delay:2.9s;}
-.sp-bar span:nth-child(5){animation-delay:2.95s;}
+.sp-bar span:nth-child(1){animation-delay:1.5s;}.sp-bar span:nth-child(2){animation-delay:1.55s;}
+.sp-bar span:nth-child(3){animation-delay:1.6s;}.sp-bar span:nth-child(4){animation-delay:1.65s;}
+.sp-bar span:nth-child(5){animation-delay:1.7s;}
 @keyframes spBarPop{to{transform:scaleY(1);}}
+
+.sp-status{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.3em;color:var(--green-bright,#03b35a);margin-top:26px;height:1.2em;position:relative;z-index:5;opacity:0;animation:spFade 0.4s ease-out 1.6s forwards;}
 @keyframes spFade{to{opacity:1;}}
 
 @media (prefers-reduced-motion: reduce){
@@ -930,5 +927,5 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
   .splash{display:none !important;}
 }
 
-/* Lock background scroll while the v30 splash is showing. */
+/* Lock background scroll while the splash is showing. */
 body.splash-lock{overflow:hidden;}

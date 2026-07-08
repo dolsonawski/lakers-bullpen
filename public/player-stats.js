@@ -59,7 +59,7 @@
      PLAYERS HUB
      ========================================================= */
   var hubData = [], hubLines = [], hubLoaded = false, hubYears = [];
-  var hubFilters = { q: '', team: '', year: '' };
+  var hubFilters = { q: '', team: '', year: '', qual: false };
   var hubStat = 'hit', hubMode = 'trad', hubSortKey = '', hubSortDir = -1;
 
   var TEAMLABEL = { V: 'Varsity', JV: 'JV', FR: 'Freshman', SO: 'Sophomore', C: 'C-Team', L: 'Legion', JL: 'Jr Legion' };
@@ -141,6 +141,14 @@
     return cells.map(function (v, ci) { return isRate(type, cols[ci]) ? pill(v == null ? '—' : v, '') : v; });
   }
 
+  // Signals the v33 launch splash (index.html) that the Players hub has
+  // settled — success OR failure — so it can lift. Fired at most once.
+  function bootReady() {
+    if (window.__lbPlayersReady) return;
+    window.__lbPlayersReady = true;
+    try { document.dispatchEvent(new CustomEvent('lb:players-ready')); } catch (e) {}
+  }
+
   window.loadPlayersHub = async function (force) {
     var loading = document.getElementById('playersLoading');
     var empty = document.getElementById('playersEmpty');
@@ -159,9 +167,11 @@
       renderHubGrid();
     } catch (e) {
       if (loading) loading.innerHTML = '<p>Could not load players: ' + e.message + '</p>';
+      bootReady();
       return;
     }
     if (loading) loading.style.display = 'none';
+    bootReady();
   };
 
   // Exposed so the importer matches against EVERY known player (roster + anyone
@@ -242,13 +252,14 @@
       if (!l[sect]) return false;
       if (hubFilters.year && String(l.year) !== hubFilters.year) return false;
       if (hubFilters.team && l.levelKey !== hubFilters.team) return false;
+      if (hubFilters.qual && !qualifies(l, hubStat)) return false; // 15 PA · 5 IP · 5 TC
       if (q && String(l.name || '').toLowerCase().indexOf(q) === -1) return false;
       return true;
     });
 
     if (!lines.length) {
       if (tableEl) tableEl.style.display = 'none';
-      if (empty) { empty.style.display = 'block'; empty.querySelector('p').textContent = hubLines.length ? 'No ' + (hubStat === 'hit' ? 'hitting' : hubStat === 'pit' ? 'pitching' : 'fielding') + ' stats for this team & season.' : 'No players yet — import a GameChanger stats file to get started.'; }
+      if (empty) { empty.style.display = 'block'; empty.querySelector('p').textContent = hubLines.length ? 'No ' + (hubStat === 'hit' ? 'hitting' : hubStat === 'pit' ? 'pitching' : 'fielding') + ' stats for this team & season.' + (hubFilters.qual ? ' (Qualifiers filter is on.)' : '') : 'No players yet — import a GameChanger stats file to get started.'; }
       return;
     }
     if (empty) empty.style.display = 'none';
@@ -295,7 +306,7 @@
     var totLead = '<td class="lft tlabel">Team Total</td><td></td>' + (showPos ? '<td></td>' : '') + '<td></td>';
     var totTds = totals.map(function (v, ci) { var k = cols[ci]; var inner = isRate(hubStat, k) ? pill(v == null ? '—' : v, '') : (v == null ? '—' : v); return '<td class="' + (k === 'Pos' ? 'lft ' : '') + 'key">' + inner + '</td>'; }).join('');
     tfoot.innerHTML = '<tr class="totals">' + totLead + totTds + '</tr>' +
-      '<tr><td colspan="' + (leadCols + cols.length) + '" class="hub-foot">' + lines.length + ' ' + (hubStat === 'hit' ? 'hitters' : hubStat === 'pit' ? 'pitchers' : 'fielders') + ' · ' + hubFilters.year + (hubFilters.team ? ' ' + (TEAMLABEL[hubFilters.team] || hubFilters.team) : ' · all teams') + ' · totals pool the rows shown (team AVG = total H ÷ total AB) · click a name for the full card</td></tr>';
+      '<tr><td colspan="' + (leadCols + cols.length) + '" class="hub-foot">' + lines.length + ' ' + (hubStat === 'hit' ? 'hitters' : hubStat === 'pit' ? 'pitchers' : 'fielders') + ' · ' + hubFilters.year + (hubFilters.team ? ' ' + (TEAMLABEL[hubFilters.team] || hubFilters.team) : ' · all teams') + (hubFilters.qual ? ' · qualifiers only' : '') + ' · totals pool the rows shown (team AVG = total H ÷ total AB) · click a name for the full card</td></tr>';
 
     thead.querySelectorAll('th.sortable').forEach(function (th) { th.onclick = function () { var k = th.dataset.k; if (hubSortKey === k) hubSortDir *= -1; else { hubSortKey = k; hubSortDir = (k === '__name') ? 1 : -1; } renderHubGrid(); }; });
   }
@@ -304,6 +315,8 @@
   function wireHub() {
     var search = document.getElementById('playersSearch');
     if (search) search.oninput = function () { hubFilters.q = this.value; renderHubGrid(); };
+    var qc = document.getElementById('playersQualChip');
+    if (qc) qc.onclick = function () { hubFilters.qual = !hubFilters.qual; qc.classList.toggle('on', hubFilters.qual); renderHubGrid(); };
     var ysel = document.getElementById('playersYear');
     if (ysel) ysel.onchange = function () { hubFilters.year = this.value; hubSortKey = ''; renderHubGrid(); };
     var tabs = document.getElementById('hubStatTabs');
@@ -972,6 +985,35 @@
     if (!(window.jspdf && window.jspdf.jsPDF)) p = p.then(function () { return _rptLoad('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'); });
     return p.then(function () { if (!(window.jspdf.jsPDF.API && window.jspdf.jsPDF.API.autoTable)) return _rptLoad('https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js'); });
   }
+  // App fonts for the PDF so the report matches the app: Bebas Neue (display),
+  // DM Sans (body), IBM Plex Mono (data/labels). TTFs are hosted alongside the
+  // app and fetched only when a report is generated; base64 is memoized so
+  // repeat reports in a session don't refetch.
+  var _RPTFONTS = [
+    ['fonts/BebasNeue-Regular.ttf', 'BebasNeue', 'normal'],
+    ['fonts/DMSans-Regular.ttf', 'DMSans', 'normal'],
+    ['fonts/DMSans-Bold.ttf', 'DMSans', 'bold'],
+    ['fonts/IBMPlexMono-Regular.ttf', 'IBMPlexMono', 'normal'],
+    ['fonts/IBMPlexMono-SemiBold.ttf', 'IBMPlexMono', 'bold']
+  ];
+  var _rptFontB64 = {};
+  function _abToB64(buf) { var s = '', u = new Uint8Array(buf), CH = 0x8000; for (var i = 0; i < u.length; i += CH) s += String.fromCharCode.apply(null, u.subarray(i, i + CH)); return btoa(s); }
+  function _rptFonts(doc) {
+    return Promise.all(_RPTFONTS.map(function (f) {
+      if (_rptFontB64[f[0]]) return null;
+      return fetch(f[0]).then(function (r) { if (!r.ok) throw new Error('font ' + f[0]); return r.arrayBuffer(); }).then(function (b) { _rptFontB64[f[0]] = _abToB64(b); });
+    })).then(function () {
+      _RPTFONTS.forEach(function (f) { var vf = f[0].split('/').pop(); doc.addFileToVFS(vf, _rptFontB64[f[0]]); doc.addFont(vf, f[1], f[2]); });
+    });
+  }
+  // Block M crest (same art as the app icon) for the report header.
+  var _rptCrestB64 = null;
+  function _rptCrest() {
+    if (_rptCrestB64) return Promise.resolve(_rptCrestB64);
+    return fetch('block-m.png').then(function (r) { if (!r.ok) throw new Error('crest'); return r.blob(); }).then(function (b) {
+      return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { _rptCrestB64 = fr.result; res(_rptCrestB64); }; fr.onerror = rej; fr.readAsDataURL(b); });
+    });
+  }
   function _lc(a, b, t) { return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)]; }
   function _pctRGB(p) { var t = p / 100, B = [63, 127, 214], G = [138, 151, 166], R = [224, 49, 75]; return t <= 0.5 ? _lc(B, G, t / 0.5) : _lc(G, R, (t - 0.5) / 0.5); }
   function _today() { var d = new Date(), m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; return m[d.getMonth()] + ' ' + d.getDate() + ' ' + d.getFullYear(); }
@@ -1024,6 +1066,9 @@
       await _rptLibs();
       var jsPDF = window.jspdf.jsPDF;
       var doc = new jsPDF({ unit: 'pt', format: 'letter', compress: true });
+      // F maps the app's three font roles; falls back to helvetica offline.
+      var F = { disp: 'BebasNeue', body: 'DMSans', mono: 'IBMPlexMono' };
+      try { await _rptFonts(doc); } catch (fe) { F = { disp: 'helvetica', body: 'helvetica', mono: 'helvetica' }; }
       var PW = doc.internal.pageSize.getWidth(), PH = doc.internal.pageSize.getHeight(), M = 34, CW = PW - M * 2, y = 0;
       var nameEl = document.getElementById('playerCardName');
       var name = (nameEl && nameEl.textContent && nameEl.textContent.trim()) || 'Player';
@@ -1039,27 +1084,27 @@
       function table(head, data, left) {
         doc.autoTable({
           startY: y, head: [head], body: data.body, margin: { left: M, right: M }, theme: 'grid',
-          styles: { font: 'helvetica', fontSize: 6.4, cellPadding: 2, lineColor: [223, 230, 238], lineWidth: 0.3, textColor: [26, 35, 48], halign: 'right', valign: 'middle' },
-          headStyles: { fillColor: [9, 43, 73], textColor: [255, 255, 255], fontSize: 5.6, fontStyle: 'bold', halign: 'right' },
+          styles: { font: F.mono, fontSize: 6.4, cellPadding: 2, lineColor: [223, 230, 238], lineWidth: 0.3, textColor: [26, 35, 48], halign: 'right', valign: 'middle' },
+          headStyles: { font: F.mono, fillColor: [9, 43, 73], textColor: [255, 255, 255], fontSize: 5.6, fontStyle: 'bold', halign: 'right' },
           columnStyles: _leftCols(left),
           didParseCell: function (dd) { if (dd.section === 'body') { var rt = data.types[dd.row.index]; if (rt === 'tot') { dd.cell.styles.fillColor = [234, 242, 255]; dd.cell.styles.textColor = [9, 43, 73]; dd.cell.styles.fontStyle = 'bold'; } else if (rt === 'sub') { dd.cell.styles.fillColor = [238, 247, 240]; dd.cell.styles.textColor = [10, 94, 52]; dd.cell.styles.fontStyle = 'bold'; } } }
         });
         y = doc.lastAutoTable.finalY;
       }
-      function sectionH(txt) { ensure(28); doc.setTextColor(9, 43, 73); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(txt, M, y + 12); doc.setDrawColor(2, 131, 66); doc.setLineWidth(1.4); doc.line(M, y + 16, PW - M, y + 16); doc.setLineWidth(0.3); y += 22; }
+      function sectionH(txt) { ensure(28); doc.setTextColor(9, 43, 73); doc.setFont(F.disp, 'normal'); doc.setFontSize(13); doc.text(txt.toUpperCase(), M, y + 12); doc.setDrawColor(2, 131, 66); doc.setLineWidth(1.4); doc.line(M, y + 16, PW - M, y + 16); doc.setLineWidth(0.3); y += 22; }
       function drawPctRow(x, ry, w, r) {
         var labW = 48, valW = 34, barX = x + labW + 6, barW = w - labW - valW - 12, cy = ry + 8;
-        doc.setTextColor(40, 48, 60); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.6); doc.text(r.k, x + labW, cy + 2, { align: 'right' });
+        doc.setTextColor(40, 48, 60); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.2); doc.text(r.k, x + labW, cy + 2, { align: 'right' });
         doc.setFillColor(233, 238, 244); doc.roundedRect(barX, cy - 3, barW, 6, 3, 3, 'F');
         if (r.pct != null) {
           var col = _pctRGB(r.pct); doc.setFillColor(col[0], col[1], col[2]); doc.roundedRect(barX, cy - 3, Math.max(4, barW * r.pct / 100), 6, 3, 3, 'F');
           var bx = barX + Math.max(8, Math.min(barW - 8, barW * r.pct / 100)); doc.setFillColor(col[0], col[1], col[2]); doc.circle(bx, cy, 6, 'F');
-          doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(6); doc.text(String(r.pct), bx, cy + 2, { align: 'center' });
+          doc.setTextColor(255, 255, 255); doc.setFont(F.mono, 'bold'); doc.setFontSize(6); doc.text(String(r.pct), bx, cy + 2, { align: 'center' });
         }
-        doc.setTextColor(40, 48, 60); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.4); doc.text(String(r.disp), x + w, cy + 2, { align: 'right' });
+        doc.setTextColor(40, 48, 60); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.4); doc.text(String(r.disp), x + w, cy + 2, { align: 'right' });
       }
       function pctBlock(sub2, rows) {
-        ensure(24); doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
+        ensure(24); doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.5);
         doc.text('PERCENTILES VS UPPER TIER', M, y + 8); doc.text(sub2, PW - M, y + 8, { align: 'right' }); y += 14;
         var half = Math.ceil(rows.length / 2), colW = (CW - 26) / 2, rh = 15;
         ensure(half * rh + 6);
@@ -1070,37 +1115,37 @@
         var bp = (typeof window.pcxBullpenReport === 'function') ? window.pcxBullpenReport() : null;
         if (!bp || !bp.types.some(function (t) { return t.points.length; })) return;
         ensure(170);
-        doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5);
+        doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.5);
         doc.text("BULLPEN COMMAND · PITCH LOCATION (PITCHER'S VIEW)", M, y + 8); doc.text(bp.season + ' · ' + bp.totalPitches + ' pitches', PW - M, y + 8, { align: 'right' }); y += 14;
         var mapW = (CW - 32) / 3, mapH = mapW * 132 / 120;
         bp.types.forEach(function (t, idx) {
           var cx = M + idx * (mapW + 16);
-          doc.setTextColor(t.rgb[0], t.rgb[1], t.rgb[2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.4); doc.text(t.label, cx, y + 8);
-          doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text((t.n ? t.n + 'p' : '—') + (t.execPct != null ? ' · ' + t.execPct + '%' : ''), cx + mapW, y + 8, { align: 'right' });
+          doc.setTextColor(t.rgb[0], t.rgb[1], t.rgb[2]); doc.setFont(F.mono, 'bold'); doc.setFontSize(7.4); doc.text(t.label, cx, y + 8);
+          doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'normal'); doc.setFontSize(6); doc.text((t.n ? t.n + 'p' : '—') + (t.execPct != null ? ' · ' + t.execPct + '%' : ''), cx + mapW, y + 8, { align: 'right' });
           doc.addImage(_heatCanvas(t.points), 'PNG', cx, y + 12, mapW, mapH); doc.setDrawColor(223, 230, 238); doc.rect(cx, y + 12, mapW, mapH);
         });
         y += 12 + mapH + 4;
-        doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text('fewer \u2192 more pitches · dashed box = strike zone', PW / 2, y + 4, { align: 'center' }); y += 12;
+        doc.setTextColor(107, 119, 133); doc.setFont(F.body, 'normal'); doc.setFontSize(6); doc.text('fewer \u2192 more pitches · dashed box = strike zone', PW / 2, y + 4, { align: 'center' }); y += 12;
         var items = [['All', bp.execAll, [2, 131, 66]]]; bp.types.forEach(function (t) { items.push([t.label, t.execPct, t.rgb]); });
         var ew = (CW - 36) / 4;
-        items.forEach(function (e, idx) { if (e[1] == null) return; var ex = M + idx * (ew + 12); doc.setTextColor(e[2][0], e[2][1], e[2][2]); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.4); doc.text(e[0] + ' exec', ex, y + 6); doc.setFillColor(233, 238, 244); doc.roundedRect(ex, y + 9, ew, 6, 3, 3, 'F'); doc.setFillColor(e[2][0], e[2][1], e[2][2]); doc.roundedRect(ex, y + 9, Math.max(4, ew * e[1] / 100), 6, 3, 3, 'F'); doc.setTextColor(60, 68, 80); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text(e[1] + '%', ex + ew, y + 6, { align: 'right' }); });
+        items.forEach(function (e, idx) { if (e[1] == null) return; var ex = M + idx * (ew + 12); doc.setTextColor(e[2][0], e[2][1], e[2][2]); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.4); doc.text(e[0] + ' exec', ex, y + 6); doc.setFillColor(233, 238, 244); doc.roundedRect(ex, y + 9, ew, 6, 3, 3, 'F'); doc.setFillColor(e[2][0], e[2][1], e[2][2]); doc.roundedRect(ex, y + 9, Math.max(4, ew * e[1] / 100), 6, 3, 3, 'F'); doc.setTextColor(60, 68, 80); doc.setFont(F.mono, 'normal'); doc.setFontSize(6); doc.text(e[1] + '%', ex + ew, y + 6, { align: 'right' }); });
         y += 22;
         var vp = []; bp.types.forEach(function (t) { if (t.velo) vp.push(t.label.slice(0, 2) + ' ' + t.velo); });
-        if (vp.length) { doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text('Avg velo:   ' + vp.join('    '), M, y + 4); y += 10; }
+        if (vp.length) { doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'normal'); doc.setFontSize(6); doc.text('Avg velo:   ' + vp.join('    '), M, y + 4); y += 10; }
       }
       function posBlock() {
         var f = statLines.filter(function (l) { return l.fld; }); if (!f.length) return;
         var pos = fldAgg(f).pos || {}, tot = 0, k; for (k in pos) tot += pos[k]; if (!tot) return;
         var order = posList(pos); ensure(44);
-        doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'bold'); doc.setFontSize(6.5); doc.text('POSITIONS PLAYED', M, y + 8); y += 12;
+        doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'bold'); doc.setFontSize(6.5); doc.text('POSITIONS PLAYED', M, y + 8); y += 12;
         var tw = 60, th = 26, gap = 8, tx = M;
         order.forEach(function (p, idx) {
           if (tx + tw > PW - M) { tx = M; y += th + gap; }
           var sh = Math.round(pos[p] / tot * 100), inn = Math.round(pos[p]), on = idx === 0;
           if (on) doc.setFillColor(16, 77, 151); else doc.setFillColor(251, 252, 254);
           doc.setDrawColor(219, 226, 234); doc.roundedRect(tx, y, tw, th, 4, 4, on ? 'F' : 'FD');
-          doc.setTextColor(on ? 255 : 9, on ? 255 : 43, on ? 255 : 73); doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.text(p, tx + tw / 2, y + 11, { align: 'center' });
-          doc.setTextColor(on ? 207 : 107, on ? 224 : 119, on ? 245 : 133); doc.setFont('helvetica', 'normal'); doc.setFontSize(5.6); doc.text(sh + '% · ' + inn, tx + tw / 2, y + 20, { align: 'center' });
+          doc.setTextColor(on ? 255 : 9, on ? 255 : 43, on ? 255 : 73); doc.setFont(F.disp, 'normal'); doc.setFontSize(9); doc.text(p, tx + tw / 2, y + 11, { align: 'center' });
+          doc.setTextColor(on ? 207 : 107, on ? 224 : 119, on ? 245 : 133); doc.setFont(F.mono, 'normal'); doc.setFontSize(5.6); doc.text(sh + '% · ' + inn, tx + tw / 2, y + 20, { align: 'center' });
           tx += tw + gap;
         });
         y += th + 6;
@@ -1108,11 +1153,19 @@
 
       // ---- header band ----
       doc.setFillColor(9, 43, 73); doc.rect(0, 0, PW, 74, 'F'); doc.setFillColor(2, 131, 66); doc.rect(0, 74, PW, 3, 'F');
-      doc.setTextColor(166, 195, 230); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+      doc.setTextColor(166, 195, 230); doc.setFont(F.mono, 'normal'); doc.setFontSize(7);
       doc.text('MINNEWASKA LAKERS BASEBALL · SCOUTING REPORT', M, 20); doc.text('Generated ' + _today(), PW - M, 20, { align: 'right' });
-      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text(name, M, 48);
-      if (number) { var nw = doc.getTextWidth(name); doc.setFontSize(11); doc.setTextColor(200, 215, 235); doc.text('#' + number, M + nw + 10, 46); }
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(220, 231, 245);
+      // block M crest (app-icon art) + white BASEBALL, right side under the date
+      try {
+        var crest = await _rptCrest();
+        var mw = 40, mh = mw * 203 / 314, mx = PW - M - mw, my = 27;
+        doc.addImage(crest, 'PNG', mx, my, mw, mh);
+        doc.setTextColor(255, 255, 255); doc.setFont(F.body, 'bold'); doc.setFontSize(6.5);
+        doc.text('BASEBALL', mx + mw / 2, my + mh + 8, { align: 'center' });
+      } catch (ce) {}
+      doc.setTextColor(255, 255, 255); doc.setFont(F.disp, 'normal'); doc.setFontSize(26); doc.text(name, M, 48);
+      if (number) { var nw = doc.getTextWidth(name); doc.setFont(F.mono, 'normal'); doc.setFontSize(10); doc.setTextColor(200, 215, 235); doc.text('#' + number, M + nw + 10, 46); }
+      doc.setFont(F.body, 'normal'); doc.setFontSize(8.5); doc.setTextColor(220, 231, 245);
       doc.text((primaryPos ? primaryPos + ' · primary position    ' : '') + 'Appeared at ' + allLvls.map(function (k) { return TEAMLABEL[k] || k; }).join(' · '), M, 66);
       y = 77;
 
@@ -1121,12 +1174,12 @@
       if (rH.length) { var ht = hitTotals(rH, 'trad'); chips.push(['AVG', ht[12]], ['OPS', ht[15]], ['HR', String(ht[7])]); }
       if (rP.length) { var pt = pitTotals(rP, 'trad'); chips.push(['ERA', pt[12]], ['K', String(pt[10])]); }
       if (rF.length) { var ft = fldAggCells(fldAgg(rF)); chips.push(['FPCT', ft[6]]); }
-      doc.setFillColor(243, 246, 250); doc.rect(0, y, PW, 16, 'F'); doc.setTextColor(16, 77, 151); doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+      doc.setFillColor(243, 246, 250); doc.rect(0, y, PW, 16, 'F'); doc.setTextColor(16, 77, 151); doc.setFont(F.mono, 'bold'); doc.setFontSize(7);
       doc.text('MOST RECENT SEASON — ' + maxY + ' · ' + recentLvls.map(function (k) { return TEAMLABEL[k] || k; }).join(' · '), M, y + 11); y += 16;
       var chipH = 34, cwc = CW / Math.max(1, chips.length);
       chips.forEach(function (c, idx) {
-        var cx = M + idx * cwc; doc.setTextColor(16, 77, 151); doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.text(String(c[1]), cx + cwc / 2, y + 16, { align: 'center' });
-        doc.setTextColor(107, 119, 133); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text(c[0], cx + cwc / 2, y + 27, { align: 'center' });
+        var cx = M + idx * cwc; doc.setTextColor(16, 77, 151); doc.setFont(F.disp, 'normal'); doc.setFontSize(15); doc.text(String(c[1]), cx + cwc / 2, y + 16, { align: 'center' });
+        doc.setTextColor(107, 119, 133); doc.setFont(F.mono, 'normal'); doc.setFontSize(6); doc.text(c[0], cx + cwc / 2, y + 27, { align: 'center' });
         if (idx > 0) { doc.setDrawColor(219, 226, 234); doc.line(cx, y, cx, y + chipH); }
       });
       doc.setDrawColor(219, 226, 234); doc.line(0, y + chipH, PW, y + chipH); y += chipH + 14;
@@ -1141,7 +1194,7 @@
 
       // ---- footers ----
       var np = doc.internal.getNumberOfPages();
-      for (var pi = 1; pi <= np; pi++) { doc.setPage(pi); doc.setTextColor(140, 150, 160); doc.setFont('helvetica', 'normal'); doc.setFontSize(6); doc.text('Lakers Bullpen · lakers-bullpen.web.app', M, PH - 16); if (np > 1) doc.text(pi + ' / ' + np, PW - M, PH - 16, { align: 'right' }); }
+      for (var pi = 1; pi <= np; pi++) { doc.setPage(pi); doc.setTextColor(140, 150, 160); doc.setFont(F.mono, 'normal'); doc.setFontSize(6); doc.text('Lakers Bullpen · lakers-bullpen.web.app', M, PH - 16); if (np > 1) doc.text(pi + ' / ' + np, PW - M, PH - 16, { align: 'right' }); }
 
       // ---- share / download ----
       var blob = doc.output('blob');
