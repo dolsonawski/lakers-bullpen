@@ -1,0 +1,7 @@
+{
+  "name": "lakers-bullpen-verify",
+  "private": true,
+  "description": "Headless release verification harness (see .claude/skills/lakers-release)",
+  "scripts": { "verify": "node verify.js" },
+  "dependencies": { "puppeteer-core": "^24.0.0" }
+}

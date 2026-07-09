@@ -41,7 +41,9 @@ Complete ALL of these before packaging or deploying. Do not skip any step.
      class of bug: every `.view-*` container needs a `display:none` default and
      an `.active` rule)
    - If the repo contains `verify/` or `test/` harness files, run those; do not
-     regenerate a harness from scratch if one exists.
+     regenerate a harness from scratch if one exists. The standing harness lives
+     in `verify/` (since v35): `cd verify && npm i && node verify.js` — extend
+     its checks to cover the features changed in the release being shipped.
 
 5. **Firestore rules check.** If `firestore.rules` changed this release, the deploy
    command must include `firestore:rules` (see deploy commands below). A
