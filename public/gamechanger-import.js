@@ -161,7 +161,7 @@
       '<div class="modal gc-modal">' +
         '<div class="modal-title">Import GameChanger Stats</div>' +
         '<div class="modal-subtitle" id="gcSub">Drop a season export to begin</div>' +
-        '<div id="gcDrop" class="gc-drop"><div class="gc-drop-ic">📂</div>' +
+        '<div id="gcDrop" class="gc-drop"><div class="gc-drop-ic"><svg class="icon"><use href="#i-folder"/></svg></div>' +
           '<div class="gc-drop-t">Drop a GameChanger CSV here</div>' +
           '<div class="gc-drop-s">One file per team &amp; season · batting + pitching + fielding</div>' +
           '<button class="gc-browse" id="gcBrowse">or browse files</button>' +

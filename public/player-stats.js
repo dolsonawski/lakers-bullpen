@@ -210,6 +210,19 @@
         c.onclick = function () { hubFilters.team = c.dataset.team; hubSortKey = ''; renderHubGrid(); };
       });
     }
+    layoutHubFilters();
+  }
+
+  // v35 — search row space manager: when the team chip rail can't share the
+  // row with a usable search field (~150px), collapse search to the magnifier
+  // (.pf-tight); tapping it expands the field over the rail (.searching).
+  function layoutHubFilters() {
+    var row = document.getElementById('pfSearchRow');
+    if (!row || row.classList.contains('searching')) return;
+    var rail = document.getElementById('playersLevelChips');
+    row.classList.remove('pf-tight'); // measure at full size first
+    var need = (rail ? rail.scrollWidth : 0) + 150 + 16;
+    row.classList.toggle('pf-tight', need > row.clientWidth);
   }
 
   /* ---- shared cell builders (mirror the player-card columns exactly) ---- */
@@ -315,6 +328,17 @@
   function wireHub() {
     var search = document.getElementById('playersSearch');
     if (search) search.oninput = function () { hubFilters.q = this.value; renderHubGrid(); };
+    // collapsed-search expander (v35 toolbar): magnifier swaps the chip rail
+    // for the field; an empty field gives the row back on blur
+    var srow = document.getElementById('pfSearchRow');
+    var sbtn = document.getElementById('playersSearchBtn');
+    if (sbtn && srow && search) {
+      sbtn.onclick = function () { srow.classList.add('searching'); search.focus(); };
+      search.addEventListener('blur', function () {
+        if (!search.value) { srow.classList.remove('searching'); layoutHubFilters(); }
+      });
+    }
+    window.addEventListener('resize', layoutHubFilters);
     var qc = document.getElementById('playersQualChip');
     if (qc) qc.onclick = function () { hubFilters.qual = !hubFilters.qual; qc.classList.toggle('on', hubFilters.qual); renderHubGrid(); };
     var ysel = document.getElementById('playersYear');
@@ -369,9 +393,9 @@
     };
     document.getElementById('playerCardBody').innerHTML =
       '<div class="pcx-tabs">' +
-        tabBtn('hit', '🏏 Hitting', pcTab === 'hit', hasHit) +
-        tabBtn('pit', '⚾ Pitching', pcTab === 'pit', hasPit) +
-        tabBtn('fld', '🧤 Fielding', pcTab === 'fld', hasFld) +
+        tabBtn('hit', '<svg class="icon"><use href="#i-bat"/></svg> Hitting', pcTab === 'hit', hasHit) +
+        tabBtn('pit', '<svg class="icon"><use href="#i-ball"/></svg> Pitching', pcTab === 'pit', hasPit) +
+        tabBtn('fld', '<svg class="icon"><use href="#i-glove"/></svg> Fielding', pcTab === 'fld', hasFld) +
       '</div>' +
       '<div class="pcx-toolbar" id="pcxToolbar">' +
         '<div class="pcx-seg"><button id="pcxT" class="on" onclick="pcxMode(\'trad\')">Traditional</button><button id="pcxA" onclick="pcxMode(\'adv\')">Advanced</button></div>' +
@@ -450,7 +474,7 @@
       var meta = [v.date, v.season].filter(Boolean).join(' · ');
       return '<a class="pcx-vid" href="' + safeHref(v.url) + '" target="_blank" rel="noopener">▶ Video' + (meta ? ' <span class="vd">' + escapeHtml(meta) + '</span>' : '') + '</a>';
     }).join('');
-    return '<div class="pc-section"><div class="pc-section-title">🎥 Video</div><div class="pcx-vids">' + items + '</div></div>';
+    return '<div class="pc-section"><div class="pc-section-title"><svg class="icon"><use href="#i-video"/></svg> Video</div><div class="pcx-vids">' + items + '</div></div>';
   }
 
   /* ---- table builder ---- */
@@ -816,7 +840,7 @@
     var d = playerCardData || { seasons: [] };
     var seasons = d.seasons || [];
     if (!seasons.length) return '';
-    var head = '<div class="pen-divider"><span>🎯 Bullpen Development</span><span class="pen-divsub">from the Lakers Bullpen tracker</span></div>';
+    var head = '<div class="pen-divider"><span><svg class="icon"><use href="#i-target"/></svg> Bullpen Development</span><span class="pen-divsub">from the Lakers Bullpen tracker</span></div>';
     var body = '';
     try {
       body = sectionSeasonTable(seasons) + sectionTrends(seasons) + sectionCommand(d) + sectionManage();
@@ -876,7 +900,7 @@
       '</div></div>';
   }
 
-  function emptyTab(msg) { return '<div class="pcx-empty"><div class="pcx-empty-ic">📭</div><div>' + msg + '</div></div>'; }
+  function emptyTab(msg) { return '<div class="pcx-empty"><div class="pcx-empty-ic"><svg class="icon"><use href="#i-folder"/></svg></div><div>' + msg + '</div></div>'; }
 
   /* ── v28: BP / pop / sprint sections on the card ──
      Data comes from window.playerCardSkills (all this player's skill sessions,
@@ -923,7 +947,7 @@
         '<span class="tag">' + p.swings + ' sw' + (p.topEV != null ? ' · ' + p.topEV.toFixed(1) + ' EV' : '') + (p.hardPct === bestHard ? ' · best' : '') + '</span></div>';
     }).join('');
     return '<div class="sk-section">' +
-      '<div class="sk-head"><span class="l">🏏 Batting Practice</span>' +
+      '<div class="sk-head"><span class="l"><svg class="icon"><use href="#i-bat"/></svg> Batting Practice</span>' +
       '<span class="pr"><div class="best"><b>' + Math.round(h / allSw.length * 100) + '%</b><span>hard</span></div>' +
       '<div><b>' + allSw.length + '</b><span>swings</span></div>' +
       (velos.length ? '<div><b>' + Math.max.apply(null, velos).toFixed(1) + '</b><span>top EV</span></div>' : '') + '</span></div>' +
@@ -948,7 +972,7 @@
       var rows = per.slice(0, 6).map(function (p) {
         return '<div class="sk-row"><span class="d">' + sk_fmtMD(p.date) + '</span><span class="v' + (p.best === best ? ' best' : '') + '">' + p.best.toFixed(2) + '</span><span class="tag">' + p.n + ' thr' + (p.onTgt != null ? ' · ' + p.onTgt + '% on-tgt' : '') + (p.best === best ? ' · best' : '') + '</span></div>';
       }).join('');
-      out += '<div class="sk-section"><div class="sk-head"><span class="l">🧤 Pop Times → 2B</span>' +
+      out += '<div class="sk-section"><div class="sk-head"><span class="l"><svg class="icon"><use href="#i-glove"/></svg> Pop Times → 2B</span>' +
         '<span class="pr"><div class="best"><b>' + best.toFixed(2) + '</b><span>best</span></div><div><b>' + (allT.reduce(function (a, b) { return a + b; }, 0) / allT.length).toFixed(2) + '</b><span>avg</span></div></span></div>' +
         sk_trend(per.map(function (p) { return p.best; }), true) + '<div class="sk-rows">' + rows + '</div></div>';
     }
@@ -965,7 +989,7 @@
       var rowsS = perS.slice(0, 6).map(function (p) {
         return '<div class="sk-row"><span class="d">' + sk_fmtMD(p.date) + '</span><span class="v' + (p.best === bestS ? ' best' : '') + '">' + p.best.toFixed(2) + '</span><span class="tag">' + p.n + ' sprints' + (p.best === bestS ? ' · best' : '') + '</span></div>';
       }).join('');
-      out += '<div class="sk-section"><div class="sk-head"><span class="l">⚡ Sprint · 90 ft</span>' +
+      out += '<div class="sk-section"><div class="sk-head"><span class="l"><svg class="icon"><use href="#i-bolt"/></svg> Sprint · 90 ft</span>' +
         '<span class="pr"><div class="best"><b>' + bestS.toFixed(2) + '</b><span>best</span></div><div><b>' + (allS.reduce(function (a, b) { return a + b; }, 0) / allS.length).toFixed(2) + '</b><span>avg</span></div></span></div>' +
         sk_trend(perS.map(function (p) { return p.best; }), true) + '<div class="sk-rows">' + rowsS + '</div></div>';
     }

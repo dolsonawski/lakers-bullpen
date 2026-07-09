@@ -9,6 +9,15 @@
     --executed:#00c964;--not-executed:#ef4444;
   }
   *{margin:0;padding:0;box-sizing:border-box;}
+  /* v35 inline SVG icon language (sprite in index.html) — sized by font-size,
+     colored by currentColor, so icons ride along with any text style. */
+  .icon{width:1em;height:1em;display:inline-block;vertical-align:-0.12em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  /* short segment labels swap in on phones (v35) */
+  .seg-short{display:none;}
+  @media(max-width:600px){
+    .lb-actseg .seg-full,.track-mode-seg .seg-full{display:none;}
+    .lb-actseg .seg-short,.track-mode-seg .seg-short{display:inline;}
+  }
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;background-image:radial-gradient(ellipse at 20% 0%,rgba(16,77,151,0.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(2,131,66,0.1) 0%,transparent 60%);}
   .app{max-width:880px;margin:0 auto;padding:calc(var(--header-height, 158px) + 16px) 16px 60px;}
 
@@ -33,6 +42,10 @@
 
   /* View toggle */
   .view-tracker,.view-sheet,.view-video{transition:opacity 0.2s;}
+  /* v35 — 150ms enter transition when switching tabs */
+  @keyframes viewIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+  .view-enter{animation:viewIn 0.15s ease-out;}
+  @media (prefers-reduced-motion: reduce){.view-enter{animation:none;}}
   .view-sheet{display:none;}
   .view-sheet.active{display:block;}
   .view-video{display:none;}
@@ -102,6 +115,17 @@
   .loading-hint{font-size:0.65rem;opacity:0.6;}
   .loading-spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--royal);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
   @keyframes spin{to{transform:rotate(360deg);}}
+  /* v35 skeleton shimmer — tables load in as grey rows, not a spinner */
+  .skel{display:flex;flex-direction:column;gap:11px;max-width:640px;margin:0 auto 14px;text-align:left;}
+  .skel i{display:block;height:13px;border-radius:6px;background:linear-gradient(90deg,rgba(28,58,102,0.45) 25%,rgba(100,150,230,0.22) 45%,rgba(28,58,102,0.45) 65%);background-size:200% 100%;animation:skelShimmer 1.3s linear infinite;}
+  .skel i:nth-child(1){height:24px;background-color:rgba(16,77,151,0.25);width:100%;}
+  .skel i:nth-child(2){width:92%;}
+  .skel i:nth-child(3){width:97%;animation-delay:0.08s;}
+  .skel i:nth-child(4){width:88%;animation-delay:0.16s;}
+  .skel i:nth-child(5){width:95%;animation-delay:0.24s;}
+  .skel i:nth-child(6){width:82%;animation-delay:0.32s;}
+  @keyframes skelShimmer{from{background-position:200% 0;}to{background-position:-200% 0;}}
+  @media (prefers-reduced-motion: reduce){.skel i{animation:none;}}
   .data-empty p,.data-error p{font-family:'IBM Plex Mono',monospace;font-size:0.8rem;margin-bottom:12px;}
   .data-error button{background:var(--royal);color:#fff;border:none;padding:8px 16px;border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;cursor:pointer;}
   .brand-header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(135deg,transparent,transparent 40px,rgba(2,131,66,0.04) 40px,rgba(2,131,66,0.04) 42px);pointer-events:none;}
@@ -117,7 +141,7 @@
   .color-bar span{width:28px;height:4px;border-radius:2px;}
   .color-bar .cb-blue{background:var(--royal);}.color-bar .cb-green{background:var(--green);}.color-bar .cb-silver{background:var(--silver);}
 
-  .info-bar-sticky{position:sticky;top:var(--header-height,158px);z-index:90;background:var(--surface);padding:10px 12px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+  .info-bar-sticky{position:sticky;top:var(--header-visual,var(--header-height,158px));z-index:90;background:var(--surface);padding:10px 12px;border-radius:10px;border:1px solid var(--border);margin-bottom:10px;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
   .info-bar{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;}
   .info-field{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
   .info-field label{font-family:'IBM Plex Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);white-space:nowrap;}
@@ -251,6 +275,57 @@
   .zone-drag-dot.notexec{background:var(--not-executed);box-shadow:0 0 8px rgba(198,40,40,0.6),0 2px 6px rgba(0,0,0,0.4);}
   .zone-drag-dot::after{content:'';position:absolute;top:50%;left:50%;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.8);transform:translate(-50%,-50%);}
   .zone-drag-hint{position:absolute;bottom:-14px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:0.45rem;color:var(--text-dim);white-space:nowrap;opacity:0.6;pointer-events:none;z-index:11;}
+
+  /* ── v35 direct-pick chips in pitch rows (no more tap-cycling) ── */
+  .pchip-group{display:inline-flex;gap:3px;}
+  .pchip{font-family:'IBM Plex Mono',monospace;font-size:0.55rem;font-weight:600;letter-spacing:0.03em;padding:5px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);cursor:pointer;transition:all 0.12s;}
+  .pchip.t-fastball.on{background:var(--fastball);border-color:var(--fastball);color:#fff;}
+  .pchip.t-changeup.on{background:var(--changeup);border-color:var(--changeup);color:#092B49;}
+  .pchip.t-breaking-ball.on{background:var(--breaking-ball);border-color:var(--breaking-ball);color:#fff;}
+  .pchip.d-stretch.on{background:rgba(0,201,100,0.18);border-color:var(--stretch);color:var(--stretch);}
+  .pchip.d-windup.on{background:rgba(167,139,250,0.18);border-color:var(--windup);color:var(--windup);}
+
+  /* ── v35 LIVE PAD (Decision 4A) — Dynamic + Game entry surface ── */
+  .live-pad{position:sticky;top:calc(var(--header-visual,var(--header-height,158px)) + 8px);z-index:85;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,0.45);}
+  .lp-head{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;}
+  .lp-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:0.06em;color:#fff;}
+  .lp-sub{font-family:'IBM Plex Mono',monospace;font-size:0.58rem;color:var(--text-dim);flex:1;min-width:0;}
+  .lp-btn{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.05em;padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--silver-light);cursor:pointer;}
+  .lp-btn:hover{border-color:var(--text-dim);}
+  .lp-btn.lp-done{background:var(--green);border-color:var(--green);color:#fff;}
+  .lp-picks{display:flex;gap:8px;margin-bottom:10px;}
+  .lp-type{flex:1;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;font-weight:600;padding:13px 0;border-radius:9px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all 0.12s;}
+  .lp-type.t-fastball{color:var(--fastball);}
+  .lp-type.t-breaking-ball{color:var(--breaking-ball);}
+  .lp-type.t-changeup{color:var(--changeup);}
+  .lp-type.t-fastball.on{background:var(--fastball);border-color:var(--fastball);color:#fff;}
+  .lp-type.t-breaking-ball.on{background:var(--breaking-ball);border-color:var(--breaking-ball);color:#fff;}
+  .lp-type.t-changeup.on{background:var(--changeup);border-color:var(--changeup);color:#092B49;}
+  .lp-delseg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;flex:none;}
+  .lp-delseg button{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;font-weight:600;padding:13px 13px;border:none;background:transparent;color:var(--text-dim);cursor:pointer;}
+  .lp-delseg button#lpDelS.on{background:rgba(0,201,100,0.2);color:var(--stretch);}
+  .lp-delseg button#lpDelW.on{background:rgba(167,139,250,0.2);color:var(--windup);}
+  .lp-body{display:flex;gap:14px;align-items:flex-start;}
+  .zone-grid.lp-zone{width:240px;height:240px;flex-shrink:0;}
+  .zone-grid.lp-zone canvas{width:240px;height:240px;}
+  .lp-side{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;}
+  .lp-velo{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.85rem;padding:10px 12px;text-align:center;-moz-appearance:textfield;}
+  .lp-velo::-webkit-outer-spin-button,.lp-velo::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .lp-velo:focus{border-color:var(--royal);outline:none;}
+  .lp-res{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;font-weight:600;letter-spacing:0.04em;padding:11px 0;border-radius:8px;cursor:pointer;transition:all 0.12s;}
+  .lp-res.ok{background:rgba(0,201,100,0.14);border:1px solid rgba(0,201,100,0.45);color:var(--executed);}
+  .lp-res.ok:hover{background:rgba(0,201,100,0.24);}
+  .lp-res.no{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);color:var(--not-executed);}
+  .lp-res.no:hover{background:rgba(239,68,68,0.22);}
+  .lp-hint{font-family:'IBM Plex Mono',monospace;font-size:0.52rem;color:var(--text-dim);line-height:1.7;}
+  .pitch-num.lp-editable{cursor:pointer;color:var(--royal-light);text-decoration:underline dotted;text-underline-offset:3px;}
+  tr.lp-edit-row td{background:rgba(2,131,66,0.08);}
+  tr.lp-edit-row td:first-child{box-shadow:inset 3px 0 0 var(--green);}
+  @media(max-width:600px){
+    .lp-body{gap:10px;}
+    .zone-grid.lp-zone{width:200px;height:200px;}
+    .zone-grid.lp-zone canvas{width:200px;height:200px;}
+  }
   /* Location map panel */
   .location-map-panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:12px;}
   .location-map-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;}
@@ -551,8 +626,24 @@
 .view-board{display:none;}
 .view-board.active{display:block;}
 
-.players-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);}
-.players-search{flex:1;min-width:150px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;padding:9px 12px;border-radius:8px;}
+/* v35 two-row filter toolbar (Decision 3A) — fixed height, never wraps.
+   Row 1: season · Traditional/Advanced · Qualifiers (a table mode, so it
+   rides with the other modes). Row 2: search + team chip rail. The rail
+   scrolls sideways; when it crowds the row, player-stats.js sets .pf-tight
+   and the search collapses to a magnifier that expands on tap (.searching). */
+.players-filters{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
+.pf-row{display:flex;gap:8px;align-items:center;min-width:0;}
+.pf-qual{margin-left:auto;}
+.chips.pf-rail{flex:1;flex-wrap:nowrap;overflow-x:auto;min-width:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.chips.pf-rail::-webkit-scrollbar{display:none;}
+.chips.pf-rail .chip{flex:none;}
+.pf-search-btn{display:none;flex:none;width:38px;height:36px;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:1.1rem;line-height:1;cursor:pointer;}
+.pf-search-btn:hover{color:var(--text);}
+#pfSearchRow.pf-tight .players-search{display:none;}
+#pfSearchRow.pf-tight .pf-search-btn{display:inline-flex;}
+#pfSearchRow.searching .players-search{display:block;flex:1;}
+#pfSearchRow.searching .pf-rail{display:none;}
+.players-search{flex:0 1 220px;min-width:130px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;padding:9px 12px;border-radius:8px;}
 .chips{display:flex;gap:5px;flex-wrap:wrap;}
 .chip{background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:6px 10px;border-radius:20px;cursor:pointer;transition:all .15s;}
 .chip.on{background:var(--royal);border-color:var(--royal);color:#fff;}
@@ -811,6 +902,7 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
   .tabbar .tb.on .ic{filter:none;opacity:1;}
   .app{padding-bottom:96px;}
   .back-to-top{bottom:88px;}
+  .toast{bottom:calc(64px + env(safe-area-inset-bottom));} /* clear the tab bar */
   .track-mode-seg button{font-size:0.52rem;padding:9px 2px;}
   .board-tiers{grid-template-columns:repeat(2,1fr);}
   .brd-name{min-width:96px;font-size:0.82rem;}
@@ -822,6 +914,43 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
 @media(max-width:600px){
   .waffle-btn{display:none!important;}
   .header-gear{display:flex;}
+}
+
+/* ============================================================
+   v35 — COMPACT STRIP HEADER (Decision 2A)
+   html.hdr-compact is set by app.js in two cases:
+   · phone landscape (max-height 500px + coarse pointer) — always
+   · portrait mobile, scrolled past the fold — scroll-shrink
+   Crest + LAKERS BASEBALL on one ~44px line; MINNEWASKA and the
+   color bar drop. --header-visual tracks the on-screen height for
+   sticky elements; --header-height keeps the full-size value so
+   the page doesn't jump while scroll-shrinking.
+   ============================================================ */
+.brand-crest{display:none;}
+.brand-header{transition:padding .18s ease;}
+.brand-main{transition:font-size .18s ease;}
+html.hdr-compact .brand-header{display:flex;align-items:center;gap:10px;text-align:left;padding:7px max(14px,env(safe-area-inset-right)) 7px max(14px,env(safe-area-inset-left));}
+html.hdr-compact .brand-header::before{display:none;}
+html.hdr-compact .brand-header::after{height:3px;}
+html.hdr-compact .brand-crest{display:block;height:28px;width:auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));}
+html.hdr-compact .brand-school,html.hdr-compact .color-bar{display:none;}
+html.hdr-compact .brand-main{font-size:1.35rem;letter-spacing:0.07em;line-height:1;margin-bottom:0;}
+html.hdr-compact .brand-main .baseball-text{margin-left:6px;}
+html.hdr-compact .waffle-btn{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:30px;height:30px;}
+html.hdr-compact .header-gear{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:32px;height:32px;}
+@media (prefers-reduced-motion: reduce){
+  .brand-header,.brand-main{transition:none;}
+}
+
+/* v35 — phone landscape: tab bar returns + safe-area padding.
+   (Keep the .tb rules in sync with the ≤600px block above.) */
+@media (max-height:500px) and (pointer:coarse){
+  .tabbar{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:140;background:#0a1a33;border-top:1px solid var(--border);padding:3px max(4px,env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left));}
+  .tabbar .tb{flex:1;background:transparent;border:none;border-top:2px solid transparent;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:0.55rem;letter-spacing:0.04em;color:var(--text-dim,#7a96b8);text-transform:uppercase;padding:5px 0 2px;cursor:pointer;}
+  .tabbar .tb .ic{display:none;} /* icons cost height sideways */
+  .tabbar .tb.on{color:#fff;border-top-color:var(--green);}
+  .app{padding-left:max(16px,env(safe-area-inset-left));padding-right:max(16px,env(safe-area-inset-right));padding-bottom:64px;}
+  .toast{bottom:calc(44px + env(safe-area-inset-bottom));} /* clear the slim tab bar */
 }
 
 /* ═══════════ v28 — skills leaderboard + card skill sections + BP velo ═══════════ */
@@ -877,13 +1006,13 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
 .sk-note{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--dim);line-height:1.6;margin-top:9px;padding-top:8px;border-top:1px solid rgba(28,58,102,.4);}
 
 /* ============================================================
-   v33 LAUNCH SPLASH — "Seam Trace"
+   v35 LAUNCH SPLASH — "Seam Trace"
    A giant line-art baseball rotates slowly behind the block M
-   crest + LAKERS BASEBALL wordmark while red stitches sew on
-   along the seams as the loading meter. Gated on the Players
-   hub fetch (see the boot controller in index.html): min dwell
-   2.9s, holds until data is ready, 8s cap.
-   Once per session; skipped under reduced-motion.
+   crest + LAKERS BASEBALL wordmark. Seams are a double groove;
+   tight stacked red chevrons (real lacing look) sew on as the
+   loading meter. Gated on the Players hub fetch (see the boot
+   controller in index.html): min dwell 5.8s, holds until data
+   is ready, 10s cap. Tap to skip; skipped under reduced-motion.
    ============================================================ */
 .splash{position:fixed;inset:0;z-index:9999;background:radial-gradient(100% 100% at 50% 40%,#0a2036 0%,#050d17 70%);overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .splash.sp-done{animation:spStageOut 0.45s ease-in forwards;}
@@ -892,20 +1021,21 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
 .sp-ballwrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
 .sp-ball{width:165vmin;height:165vmin;flex:none;animation:spSpin 90s linear infinite;opacity:0.9;}
 @keyframes spSpin{to{transform:rotate(360deg);}}
-.sp-orb{fill:none;stroke:rgba(166,195,230,0.16);stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 1.1s ease-out 0.1s forwards;}
-.sp-seam{fill:none;stroke:rgba(166,195,230,0.28);stroke-width:1.4;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 0.9s ease-out forwards;}
-.sp-s1{animation-delay:0.35s;}
-.sp-s2{animation-delay:0.55s;}
+.sp-orb{fill:none;stroke:rgba(166,195,230,0.16);stroke-width:1.2;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 2.2s ease-out 0.2s forwards;}
+.sp-guide{fill:none;stroke:none;} /* invisible geometry source for grooves + stitches */
+.sp-seam{fill:none;stroke:rgba(166,195,230,0.34);stroke-width:1.1;stroke-dasharray:1;stroke-dashoffset:1;animation:spDraw 1.8s ease-out forwards;}
+.sp-s1{animation-delay:0.7s;}
+.sp-s2{animation-delay:1.1s;}
 @keyframes spDraw{to{stroke-dashoffset:0;}}
-.sp-stitch{stroke:var(--pc-fa,#e84545);stroke-width:3.2;stroke-linecap:round;opacity:0;transition:opacity 0.18s ease-out;}
+.sp-stitch{fill:none;stroke:var(--pc-fa,#e84545);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;opacity:0;transition:opacity 0.18s ease-out;}
 .sp-stitch.lit{opacity:0.95;}
 .sp-stitch.tip{filter:drop-shadow(0 0 6px rgba(232,69,69,0.9));animation:spTip 0.9s ease-in-out infinite;}
 @keyframes spTip{0%,100%{opacity:0.95;}50%{opacity:0.4;}}
 
-.sp-crest{width:min(130px,30vw);display:block;margin:0 auto 16px;opacity:0;position:relative;z-index:5;animation:spCrest 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.45s forwards;filter:drop-shadow(0 6px 22px rgba(0,0,0,0.55));}
+.sp-crest{width:min(130px,30vw);display:block;margin:0 auto 16px;opacity:0;position:relative;z-index:5;animation:spCrest 1.4s cubic-bezier(0.34,1.56,0.64,1) 0.9s forwards;filter:drop-shadow(0 6px 22px rgba(0,0,0,0.55));}
 @keyframes spCrest{from{opacity:0;transform:scale(0.7) translateY(12px);}to{opacity:1;transform:scale(1) translateY(0);}}
 
-.sp-word{text-align:center;position:relative;z-index:5;opacity:0;animation:spFadeUp 0.6s ease-out 1.15s forwards;}
+.sp-word{text-align:center;position:relative;z-index:5;opacity:0;animation:spFadeUp 1.2s ease-out 2.3s forwards;}
 @keyframes spFadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
 .sp-school{font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.45em;color:var(--royal-light,#A6C3E6);}
 .sp-main{font-family:'Bebas Neue',sans-serif;font-size:2.1rem;letter-spacing:0.09em;line-height:1.1;color:#fff;margin-top:4px;}
@@ -913,12 +1043,12 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
 .sp-main .sp-baseball{color:var(--royal-light,#A6C3E6);margin-left:9px;}
 .sp-bar{display:flex;height:4px;width:180px;margin:13px auto 0;border-radius:2px;overflow:hidden;}
 .sp-bar span{flex:1;transform:scaleY(0);transform-origin:bottom;animation:spBarPop 0.25s ease-out forwards;}
-.sp-bar span:nth-child(1){animation-delay:1.5s;}.sp-bar span:nth-child(2){animation-delay:1.55s;}
-.sp-bar span:nth-child(3){animation-delay:1.6s;}.sp-bar span:nth-child(4){animation-delay:1.65s;}
-.sp-bar span:nth-child(5){animation-delay:1.7s;}
+.sp-bar span:nth-child(1){animation-delay:3.0s;}.sp-bar span:nth-child(2){animation-delay:3.1s;}
+.sp-bar span:nth-child(3){animation-delay:3.2s;}.sp-bar span:nth-child(4){animation-delay:3.3s;}
+.sp-bar span:nth-child(5){animation-delay:3.4s;}
 @keyframes spBarPop{to{transform:scaleY(1);}}
 
-.sp-status{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.3em;color:var(--green-bright,#03b35a);margin-top:26px;height:1.2em;position:relative;z-index:5;opacity:0;animation:spFade 0.4s ease-out 1.6s forwards;}
+.sp-status{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.3em;color:var(--green-bright,#03b35a);margin-top:26px;height:1.2em;position:relative;z-index:5;opacity:0;animation:spFade 0.8s ease-out 3.2s forwards;}
 @keyframes spFade{to{opacity:1;}}
 
 @media (prefers-reduced-motion: reduce){

@@ -44,26 +44,20 @@ function onSessionTypeChange(){
   const btnRand=document.getElementById('btnRandomize');
   if(t==='preset'){
     configPanel.style.display='';
-    ruleNote.textContent='⚡ Session order: Windup (FA → BB → CH) then Stretch (FA → BB → CH) · Reps within each group are shuffled · Use Randomize to re-shuffle';
-    btnGen.textContent='⚾ Build Session';
+    ruleNote.innerHTML='<svg class="icon"><use href="#i-bolt"/></svg> Session order: Windup (FA → BB → CH) then Stretch (FA → BB → CH) · Reps within each group are shuffled · Use Randomize to re-shuffle';
+    btnGen.innerHTML='<svg class="icon"><use href="#i-ball"/></svg> Build Session';
     btnRand.style.display='';
   } else if(t==='dynamic'){
     configPanel.style.display='none';
-    ruleNote.textContent='⚡ Dynamic Bullpen — 30 blank pitches generated · Adjust pitch types as you track · +10 pitches added per tap';
-    btnGen.textContent='⚾ Start Dynamic Bullpen';
+    ruleNote.innerHTML='<svg class="icon"><use href="#i-bolt"/></svg> Dynamic Bullpen — the live pad logs each pitch as it\'s thrown: pick type/delivery, tap the zone · tap a # in the log to fix a pitch';
+    btnGen.innerHTML='<svg class="icon"><use href="#i-ball"/></svg> Start Dynamic Bullpen';
     btnRand.style.display='none';
   } else if(t==='game'){
     configPanel.style.display='none';
-    ruleNote.textContent='⚡ Game Mode — blank pitches generated · Toggle pitch type & delivery live · +10 pitches added per tap';
-    btnGen.textContent='⚾ Start Game';
+    ruleNote.innerHTML='<svg class="icon"><use href="#i-bolt"/></svg> Game Mode — the live pad logs each pitch as it\'s thrown; the count is always exactly the pitches thrown (feeds the rest-day board)';
+    btnGen.innerHTML='<svg class="icon"><use href="#i-ball"/></svg> Start Game';
     btnRand.style.display='none';
   }
-}
-
-function generateBlankPitches(count){
-  const blanks=[];
-  for(let i=0;i<count;i++) blanks.push({type:'FA',cls:'fastball',delivery:'Stretch'});
-  return blanks;
 }
 
 function generateSession(){
@@ -73,10 +67,11 @@ function generateSession(){
     list=buildPitchList();
     if(!list.length)return;
     pitches=arrangeWithBlocks(list);
-  } else if(t==='dynamic'){
-    pitches=generateBlankPitches(30);
-  } else if(t==='game'){
-    pitches=generateBlankPitches(50);
+  } else {
+    // v35 live pad (Dynamic + Game): no pre-generated blanks — each pitch is
+    // created the moment it's logged from the pad, so the session is always
+    // exactly the pitches thrown (no +10, no Clear Blanks).
+    pitches=[];
   }
   marks=new Array(pitches.length).fill(null);
   zoneSelections.length=0;
@@ -84,39 +79,19 @@ function generateSession(){
   sessionActive=true;
   document.getElementById('trackerSection').classList.add('visible');
   document.getElementById('emptyState').style.display='none';
-  document.getElementById('addPitchRow').style.display='flex';
+  document.getElementById('addPitchRow').style.display=(t==='preset')?'flex':'none';
   document.getElementById('sheetsButtonTop').style.display='block';
   document.getElementById('sheetsButtonBottom').style.display='block';
   const mp=document.getElementById('locationMapPanel');
   if(mp)mp.style.display='none';
-  // Show/hide Randomize based on mode
-  const t2=getSessionType();
-  document.getElementById('btnRandomize').disabled=(t2!=='preset');
-  ['btnReset','btnClearBlanks'].forEach(id=>document.getElementById(id).disabled=false);
-  // Update add-pitch button label
-  updateAddPitchUI();
+  document.getElementById('btnRandomize').disabled=(t!=='preset');
+  document.getElementById('btnClearBlanks').disabled=(t!=='preset');
+  document.getElementById('btnReset').disabled=false;
   render(true);
-}
-
-function updateAddPitchUI(){
-  const t=getSessionType();
-  const btn=document.getElementById('btnAddPitch');
-  const label=document.getElementById('addPitchLabel');
-  if(!btn||!label)return;
-  if(t==='game'||t==='dynamic'){
-    btn.textContent='+10 Pitches';
-    label.style.display='none';
-    document.getElementById('addPitchType').style.display='none';
-    document.getElementById('addPitchDelivery').style.display='none';
-  } else {
-    btn.textContent='+ Add';
-    label.style.display='';
-    document.getElementById('addPitchType').style.display='';
-    document.getElementById('addPitchDelivery').style.display='';
-  }
+  lpSync();
 }
 function randomize(){if(!sessionActive||getSessionType()!=='preset')return;pitches=arrangeWithBlocks(buildPitchList());marks=new Array(pitches.length).fill(null);zoneSelections.length=0;pitches.forEach(()=>zoneSelections.push(-1));const mp=document.getElementById('locationMapPanel');if(mp)mp.style.display='none';render(true);}
-function resetMarks(){const t=getSessionType();if(t==='game'){pitches=generateBlankPitches(50);}else if(t==='dynamic'){pitches=generateBlankPitches(30);}marks=new Array(pitches.length).fill(null);zoneSelections.length=0;pitches.forEach(()=>zoneSelections.push(-1));document.getElementById('pitcher').value='';render(false);updateLocationMap();}
+function resetMarks(){const t=getSessionType();if(t!=='preset'){pitches=[];}marks=new Array(pitches.length).fill(null);zoneSelections.length=0;pitches.forEach(()=>zoneSelections.push(-1));document.getElementById('pitcher').value='';render(false);updateLocationMap();lpSync();}
 function toggleMark(i,t){marks[i]=marks[i]===t?null:t;updateRow(i);updateSummary();updateLocationMap();}
 
 /* =========================================================
@@ -151,33 +126,35 @@ function isStrikeCell(flatIdx){
 }
 
 /* ── Canvas drawing for the 20×20 zone grid ──────────────── */
-function drawZoneCanvas(canvas, activeIdx){
+// px lets callers render the same grid at other sizes (live pad = 240px)
+function drawZoneCanvas(canvas, activeIdx, px){
+  const P=px||GRID_PX, CELL=P/ZONE_SIZE, s=P/GRID_PX;
   const ctx=canvas.getContext('2d');
   const dpr=window.devicePixelRatio||1;
-  canvas.width=GRID_PX*dpr;
-  canvas.height=GRID_PX*dpr;
+  canvas.width=P*dpr;
+  canvas.height=P*dpr;
   ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,GRID_PX,GRID_PX);
+  ctx.clearRect(0,0,P,P);
 
   // Ball zone background (with safe roundRect)
   ctx.fillStyle='rgba(30,50,80,0.45)';
   ctx.beginPath();
-  if(ctx.roundRect){ctx.roundRect(0,0,GRID_PX,GRID_PX,4);}
-  else{ctx.rect(0,0,GRID_PX,GRID_PX);}
+  if(ctx.roundRect){ctx.roundRect(0,0,P,P,4*s);}
+  else{ctx.rect(0,0,P,P);}
   ctx.fill();
 
   // Strike zone box
-  const szX=SZ_C0*CELL_PX, szY=SZ_R0*CELL_PX;
-  const szW=(SZ_C1-SZ_C0+1)*CELL_PX, szH=(SZ_R1-SZ_R0+1)*CELL_PX;
+  const szX=SZ_C0*CELL, szY=SZ_R0*CELL;
+  const szW=(SZ_C1-SZ_C0+1)*CELL, szH=(SZ_R1-SZ_R0+1)*CELL;
   ctx.fillStyle='rgba(16,77,151,0.15)';
   ctx.fillRect(szX,szY,szW,szH);
   ctx.strokeStyle='rgba(100,150,230,0.5)';
-  ctx.lineWidth=1.2;
+  ctx.lineWidth=1.2*s;
   ctx.strokeRect(szX,szY,szW,szH);
 
   // Strike zone 3×3 thirds grid lines
   ctx.strokeStyle='rgba(100,150,230,0.18)';
-  ctx.lineWidth=0.6;
+  ctx.lineWidth=0.6*s;
   for(let i=1;i<3;i++){
     const xLine=szX+(szW/3)*i;
     ctx.beginPath();ctx.moveTo(xLine,szY);ctx.lineTo(xLine,szY+szH);ctx.stroke();
@@ -186,20 +163,20 @@ function drawZoneCanvas(canvas, activeIdx){
   }
 
   // Labels
-  ctx.font='6px "IBM Plex Mono",monospace';
+  ctx.font=(6*s)+'px "IBM Plex Mono",monospace';
   ctx.textAlign='center';
   ctx.fillStyle='rgba(122,150,184,0.45)';
-  ctx.fillText('IN',szX-1,GRID_PX-1);
-  ctx.fillText('OUT',szX+szW+1,GRID_PX-1);
-  ctx.fillText('HIGH',GRID_PX/2,szY-2);
-  ctx.fillText('LOW',GRID_PX/2,szY+szH+8);
+  ctx.fillText('IN',szX-1*s,P-1*s);
+  ctx.fillText('OUT',szX+szW+1*s,P-1*s);
+  ctx.fillText('HIGH',P/2,szY-2*s);
+  ctx.fillText('LOW',P/2,szY+szH+8*s);
 
   // Active cell highlight
   if(activeIdx>=0){
     const ar=Math.floor(activeIdx/ZONE_SIZE),ac=activeIdx%ZONE_SIZE;
     const inStrike=isStrikeCell(activeIdx);
     ctx.fillStyle=inStrike?'rgba(46,125,50,0.6)':'rgba(198,40,40,0.6)';
-    ctx.fillRect(ac*CELL_PX,ar*CELL_PX,CELL_PX,CELL_PX);
+    ctx.fillRect(ac*CELL,ar*CELL,CELL,CELL);
   }
 }
 
@@ -552,6 +529,28 @@ function restoreFieldState(saved){
   });
 }
 
+/* One row of the pitch table (v35: type + delivery are direct-pick chips —
+   one tap, no cycling; in live-pad modes the # opens pad editing). */
+function rowHtml(i){
+  const p=pitches[i];
+  const eC=marks[i]==='exec'?' executed':'',nC=marks[i]==='notexec'?' not-executed':'';
+  const padOn=typeof lpPadActive==='function'&&lpPadActive();
+  const numCell=padOn
+    ?`<span class="pitch-num lp-editable" onclick="lpEditPitch(${i})" title="Edit this pitch in the pad">${i+1}</span>`
+    :`<span class="pitch-num">${i+1}</span>`;
+  const typeChips=PITCH_TYPES.map(t=>
+    `<button class="pchip t-${t.cls}${p.type===t.type?' on':''}" onclick="setPitchType(${i},'${t.type}')">${t.type}</button>`).join('');
+  const delChips=DELIVERIES.map(d=>
+    `<button class="pchip d-${d.toLowerCase()}${p.delivery===d?' on':''}" onclick="setPitchDelivery(${i},'${d}')">${d==='Stretch'?'STR':'WND'}</button>`).join('');
+  return `<td>${numCell}</td>`+
+    `<td><div class="pchip-group">${typeChips}</div></td>`+
+    `<td><div class="pchip-group">${delChips}</div></td>`+
+    `<td><div class="velo-zone-cell"><input class="velo-input" type="number" id="velo-${i}" placeholder="MPH" min="40" max="110" step="1">${zoneGridHtml(i)}</div></td>`+
+    `<td><div class="exec-cell"><button class="exec-btn${eC}" onclick="toggleMark(${i},'exec')">${marks[i]==='exec'?'✓':''}</button></div></td>`+
+    `<td><div class="exec-cell"><button class="exec-btn${nC}" onclick="toggleMark(${i},'notexec')">${marks[i]==='notexec'?'✗':''}</button></div></td>`+
+    `<td><div class="exec-cell"><button class="del-btn" onclick="deletePitch(${i})" title="Remove pitch">✕</button></div></td>`;
+}
+
 function render(anim){
   const body=document.getElementById('pitchBody');
   body.innerHTML='';
@@ -559,14 +558,7 @@ function render(anim){
     if(zoneSelections[i]===undefined)zoneSelections[i]=-1;
     const tr=document.createElement('tr');
     if(anim){tr.classList.add('shuffled');tr.style.animationDelay=`${i*0.02}s`;}
-    const eC=marks[i]==='exec'?' executed':'',nC=marks[i]==='notexec'?' not-executed':'';
-    tr.innerHTML=`<td><span class="pitch-num">${i+1}</span></td>`+
-      `<td><div class="pitch-type ${p.cls} editable" onclick="cyclePitchType(${i})" title="Click to change pitch type"><span class="pip"></span>${p.type}<span class="edit-hint">▾</span></div></td>`+
-      `<td><span class="delivery-tag ${p.delivery.toLowerCase()} editable" onclick="cycleDelivery(${i})" title="Click to change delivery">${p.delivery}<span class="edit-hint">▾</span></span></td>`+
-      `<td><div class="velo-zone-cell"><input class="velo-input" type="number" id="velo-${i}" placeholder="MPH" min="40" max="110" step="1">${zoneGridHtml(i)}</div></td>`+
-      `<td><div class="exec-cell"><button class="exec-btn${eC}" onclick="toggleMark(${i},'exec')">${marks[i]==='exec'?'✓':''}</button></div></td>`+
-      `<td><div class="exec-cell"><button class="exec-btn${nC}" onclick="toggleMark(${i},'notexec')">${marks[i]==='notexec'?'✗':''}</button></div></td>`+
-      `<td><div class="exec-cell"><button class="del-btn" onclick="deletePitch(${i})" title="Remove pitch">✕</button></div></td>`;
+    tr.innerHTML=rowHtml(i);
     body.appendChild(tr);
   });
   // Initialize all zone canvases after DOM is built
@@ -629,27 +621,210 @@ function updateStatsBar(){const b=document.getElementById('statsBar');const fb=p
 const PITCH_TYPES=[{type:'FA',cls:'fastball'},{type:'CH',cls:'changeup'},{type:'BB',cls:'breaking-ball'}];
 const DELIVERIES=['Stretch','Windup'];
 
-function cyclePitchType(i){
-  const saved=saveFieldState();
-  const cur=PITCH_TYPES.findIndex(t=>t.type===pitches[i].type);
-  const next=PITCH_TYPES[(cur+1)%PITCH_TYPES.length];
-  pitches[i].type=next.type;
-  pitches[i].cls=next.cls;
-  render(false);
-  restoreFieldState(saved);
+/* v35 — direct-pick edits rebuild ONE row (velo preserved) instead of the
+   whole table; replaces the old cyclePitchType/cycleDelivery tap-cycling. */
+function rebuildRow(i){
+  const body=document.getElementById('pitchBody');
+  const tr=body&&body.rows[i];
+  if(!tr)return;
+  const velo=getVelo(i);
+  tr.innerHTML=rowHtml(i);
+  if(velo){const v=document.getElementById('velo-'+i);if(v)v.value=velo;}
+  requestAnimationFrame(()=>{
+    initZoneCanvas(i);
+    if(zoneSelections[i]>=0)positionDotOnZone(i,zoneSelections[i]);
+  });
 }
 
-function cycleDelivery(i){
-  const saved=saveFieldState();
-  const cur=DELIVERIES.indexOf(pitches[i].delivery);
-  pitches[i].delivery=DELIVERIES[(cur+1)%DELIVERIES.length];
-  render(false);
-  restoreFieldState(saved);
+function setPitchType(i,t){
+  if(pitches[i].type===t)return;
+  const pt=PITCH_TYPES.find(x=>x.type===t);
+  pitches[i].type=pt.type;pitches[i].cls=pt.cls;
+  rebuildRow(i);
+  updateStatsBar();updateSummary();updateLocationMap();
 }
+
+function setPitchDelivery(i,d){
+  if(pitches[i].delivery===d)return;
+  pitches[i].delivery=d;
+  rebuildRow(i);
+  updateStatsBar();updateSummary();
+}
+
+/* =========================================================
+   v35 LIVE PAD (Decision 4A) — Dynamic + Game tracking.
+   A fixed entry pad drives the session: type + delivery are
+   sticky direct-picks, one tap on the big zone logs location
+   + result + advances. The table below is the editable log —
+   tapping a row's # loads that pitch into the pad for fixes.
+   Writes the SAME pitches/marks/zoneSelections arrays as the
+   table, so maps, heat maps and saves are unchanged.
+   ========================================================= */
+const LP_PX=240; // pad zone canvas size (same 20×20 grid as row grids)
+let lpType='FA',lpDel='Stretch',lpEditIdx=null;
+
+function lpPadActive(){return sessionActive&&getSessionType()!=='preset';}
+
+function lpSync(){
+  const pad=document.getElementById('livePad');
+  if(!pad)return;
+  const on=lpPadActive();
+  pad.style.display=on?'block':'none';
+  if(on){lpEditIdx=null;lpPaint();lpDrawZone(-1);lpHeader();}
+}
+
+function lpDrawZone(activeIdx){
+  const c=document.getElementById('lpZoneCanvas');
+  if(c)drawZoneCanvas(c,activeIdx,LP_PX);
+}
+
+function lpPaint(){
+  const t=lpEditIdx!=null?pitches[lpEditIdx].type:lpType;
+  const d=lpEditIdx!=null?pitches[lpEditIdx].delivery:lpDel;
+  PITCH_TYPES.forEach(x=>{
+    const b=document.getElementById('lpType'+x.type);
+    if(b)b.classList.toggle('on',x.type===t);
+  });
+  const s=document.getElementById('lpDelS'),w=document.getElementById('lpDelW');
+  if(s)s.classList.toggle('on',d==='Stretch');
+  if(w)w.classList.toggle('on',d==='Windup');
+}
+
+function lpHeader(){
+  const title=document.getElementById('lpTitle'),sub=document.getElementById('lpSub');
+  const undo=document.getElementById('lpUndo'),done=document.getElementById('lpDone');
+  if(!title)return;
+  if(lpEditIdx!=null){
+    title.textContent='EDITING PITCH '+(lpEditIdx+1);
+    sub.textContent='tap zone or result to correct';
+    undo.style.display='none';done.style.display='';
+  }else{
+    title.textContent='PITCH '+(pitches.length+1);
+    sub.textContent=pitches.length?pitches.length+' tracked':'tap the zone to log the first pitch';
+    undo.style.display=pitches.length?'':'none';done.style.display='none';
+  }
+}
+
+function lpSetType(t){
+  if(lpEditIdx!=null){setPitchType(lpEditIdx,t);}
+  else lpType=t;
+  lpPaint();
+}
+function lpSetDel(d){
+  if(lpEditIdx!=null){setPitchDelivery(lpEditIdx,d);}
+  else lpDel=d;
+  lpPaint();
+}
+
+function lpZoneTap(flatIdx){
+  const mark=isStrikeCell(flatIdx)?'exec':'notexec';
+  if(lpEditIdx!=null){
+    const i=lpEditIdx;
+    zoneSelections[i]=flatIdx;marks[i]=mark;
+    rebuildRow(i);updateSummary();updateLocationMap();
+    lpFlash(flatIdx);lpExitEdit();
+  }else{
+    lpCommit(flatIdx,mark);
+  }
+}
+
+function lpLogResult(mark){
+  if(lpEditIdx!=null){
+    const i=lpEditIdx;
+    marks[i]=mark;
+    rebuildRow(i);updateSummary();updateLocationMap();
+    lpExitEdit();
+  }else{
+    lpCommit(-1,mark);
+  }
+}
+
+function lpCommit(zoneIdx,mark){
+  const pt=PITCH_TYPES.find(x=>x.type===lpType);
+  pitches.push({type:pt.type,cls:pt.cls,delivery:lpDel});
+  marks.push(mark);
+  zoneSelections.push(zoneIdx);
+  const i=pitches.length-1;
+  const body=document.getElementById('pitchBody');
+  const tr=document.createElement('tr');
+  tr.innerHTML=rowHtml(i);
+  body.appendChild(tr);
+  const lpV=document.getElementById('lpVelo');
+  const v=lpV?lpV.value.trim():'';
+  if(v){const vEl=document.getElementById('velo-'+i);if(vEl)vEl.value=v;}
+  if(lpV)lpV.value='';
+  requestAnimationFrame(()=>{
+    initZoneCanvas(i);
+    if(zoneIdx>=0)positionDotOnZone(i,zoneIdx);
+  });
+  updateStatsBar();updateSummary();updateLocationMap();
+  lpHeader();
+  if(zoneIdx>=0)lpFlash(zoneIdx);
+}
+
+// brief confirmation: show the logged cell on the pad, then clear for the next pitch
+let lpFlashTimer=null;
+function lpFlash(flatIdx){
+  lpDrawZone(flatIdx);
+  clearTimeout(lpFlashTimer);
+  lpFlashTimer=setTimeout(()=>{if(lpEditIdx==null)lpDrawZone(-1);},450);
+}
+
+function lpUndo(){
+  if(!pitches.length)return;
+  const i=pitches.length-1;
+  const removed=pitches.pop();marks.pop();zoneSelections.pop();
+  const body=document.getElementById('pitchBody');
+  if(body.rows[i])body.deleteRow(i);
+  updateStatsBar();updateSummary();updateLocationMap();
+  lpHeader();
+  showToast(removed.type+' #'+(i+1)+' removed');
+}
+
+function lpEditPitch(i){
+  if(!lpPadActive())return;
+  lpEditIdx=i;
+  lpPaint();
+  lpDrawZone(zoneSelections[i]>=0?zoneSelections[i]:-1);
+  const lpV=document.getElementById('lpVelo');
+  if(lpV)lpV.value=getVelo(i);
+  const body=document.getElementById('pitchBody');
+  for(const r of body.rows)r.classList.remove('lp-edit-row');
+  if(body.rows[i])body.rows[i].classList.add('lp-edit-row');
+  lpHeader();
+  const pad=document.getElementById('livePad');
+  if(pad)pad.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function lpExitEdit(){
+  if(lpEditIdx==null)return;
+  const body=document.getElementById('pitchBody');
+  for(const r of body.rows)r.classList.remove('lp-edit-row');
+  lpEditIdx=null;
+  const lpV=document.getElementById('lpVelo');
+  if(lpV)lpV.value='';
+  lpPaint();lpDrawZone(-1);lpHeader();
+}
+
+// pad wiring (elements exist from page load; taps use the shared pixelToZone)
+(function initLivePad(){
+  const grid=document.getElementById('lpZoneGrid');
+  if(!grid)return;
+  grid.addEventListener('click',function(e){
+    lpZoneTap(pixelToZone(grid,e.clientX,e.clientY));
+  });
+  const lpV=document.getElementById('lpVelo');
+  if(lpV)lpV.addEventListener('input',function(){
+    // while editing, velo edits flow straight into the row's input
+    if(lpEditIdx!=null){const vEl=document.getElementById('velo-'+lpEditIdx);if(vEl)vEl.value=lpV.value;}
+  });
+})();
 
 /* ========== DELETE PITCH ========== */
 function deletePitch(i){
-  if(pitches.length<=1){showToast('Cannot delete the last pitch');return;}
+  // Live-pad modes may delete down to zero; preset keeps its scripted table
+  if(pitches.length<=1&&!lpPadActive()){showToast('Cannot delete the last pitch');return;}
+  if(typeof lpEditIdx!=='undefined'&&lpEditIdx!=null)lpExitEdit();
   const saved=saveFieldState();
   const removed=pitches[i];
   pitches.splice(i,1);
@@ -661,34 +836,22 @@ function deletePitch(i){
   showToast(removed.type+' '+removed.delivery+' removed');
 }
 
-/* ========== ADD PITCH ========== */
+/* ========== ADD PITCH (preset mode only — live-pad modes create pitches
+   directly from the pad) ========== */
 function addPitch(){
-  const t=getSessionType();
   const saved=saveFieldState();
-  if(t==='game'||t==='dynamic'){
-    // Add 10 blank pitches
-    for(let i=0;i<10;i++){
-      pitches.push({type:'FA',cls:'fastball',delivery:'Stretch'});
-      marks.push(null);
-      zoneSelections.push(-1);
-    }
-    render(false);
-    restoreFieldState(saved);
-    showToast('10 pitches added ('+pitches.length+' total)');
-  } else {
-    const typeVal=document.getElementById('addPitchType').value.split('|');
-    const delivery=document.getElementById('addPitchDelivery').value;
-    const newPitch={type:typeVal[0],cls:typeVal[1],delivery:delivery};
-    pitches.push(newPitch);
-    marks.push(null);
-    zoneSelections.push(-1);
-    render(false);
-    restoreFieldState(saved);
-    const body=document.getElementById('pitchBody');
-    const lastRow=body.rows[body.rows.length-1];
-    if(lastRow)lastRow.scrollIntoView({behavior:'smooth',block:'nearest'});
-    showToast(typeVal[0]+' '+delivery+' added (#'+pitches.length+')');
-  }
+  const typeVal=document.getElementById('addPitchType').value.split('|');
+  const delivery=document.getElementById('addPitchDelivery').value;
+  const newPitch={type:typeVal[0],cls:typeVal[1],delivery:delivery};
+  pitches.push(newPitch);
+  marks.push(null);
+  zoneSelections.push(-1);
+  render(false);
+  restoreFieldState(saved);
+  const body=document.getElementById('pitchBody');
+  const lastRow=body.rows[body.rows.length-1];
+  if(lastRow)lastRow.scrollIntoView({behavior:'smooth',block:'nearest'});
+  showToast(typeVal[0]+' '+delivery+' added (#'+pitches.length+')');
 }
 
 /* ========== CLEAR BLANKS ========== */
@@ -763,10 +926,10 @@ function getSavedUrl(){try{return localStorage.getItem(SHEETS_URL_KEY)||DEFAULT_
 function saveUrl(u){try{localStorage.setItem(SHEETS_URL_KEY,u);}catch(e){}}
 function clearSheetsUrl(){try{localStorage.removeItem(SHEETS_URL_KEY);}catch(e){}document.getElementById('sheetsUrl').value='';showToast('Saved URL cleared');}
 
-function openSheetsModal(){const pitcher=document.getElementById('pitcher').value.trim();if(!pitcher){showToast('Select a pitcher first');return;}document.getElementById('sheetsPitcher').value=pitcher;document.getElementById('sheetsPin').value='';const url=getSavedUrl();document.getElementById('sheetsUrl').value=url;const urlField=document.getElementById('sheetsUrlField');if(url&&url.startsWith('https://script.google.com/')){urlField.style.display='none';}else{urlField.style.display='block';}setSheetsStatus('','');resetSheetsActions();document.getElementById('sheetsModal').classList.add('open');}
+function openSheetsModal(){const pitcher=document.getElementById('pitcher').value.trim();if(!pitcher){showToast('Select a pitcher first');return;}if(!pitches.length){showToast('No pitches tracked yet');return;}document.getElementById('sheetsPitcher').value=pitcher;document.getElementById('sheetsPin').value='';const url=getSavedUrl();document.getElementById('sheetsUrl').value=url;const urlField=document.getElementById('sheetsUrlField');if(url&&url.startsWith('https://script.google.com/')){urlField.style.display='none';}else{urlField.style.display='block';}setSheetsStatus('','');resetSheetsActions();document.getElementById('sheetsModal').classList.add('open');}
 function closeSheetsModal(){document.getElementById('sheetsModal').classList.remove('open');}
 function setSheetsStatus(msg,type){const el=document.getElementById('sheetsStatus');el.className='modal-status'+(type?' '+type:'');el.innerHTML=msg;}
-function resetSheetsActions(){document.getElementById('sheetsActions').innerHTML=`<button class="btn btn-cancel" onclick="closeSheetsModal()">Cancel</button><button class="btn btn-sheets-send" onclick="sendToSheets()">💾 Save Session</button>`;}
+function resetSheetsActions(){document.getElementById('sheetsActions').innerHTML=`<button class="btn btn-cancel" onclick="closeSheetsModal()">Cancel</button><button class="btn btn-sheets-send" onclick="sendToSheets()"><svg class="icon"><use href="#i-save"/></svg> Save Session</button>`;}
 
 async function sendToSheets(){
   const pin=document.getElementById('sheetsPin').value.trim();
@@ -918,6 +1081,10 @@ function switchView(view){
     var wvB=document.getElementById('wvBoard'); if(wvB)wvB.classList.add('active-view');
     loadBoard();
   }
+  // v35 — quick enter transition on the view that just became visible
+  // (CSS no-ops it under prefers-reduced-motion)
+  var shown=view==='tracker'?tracker:view==='players'?players:view==='sheet'?sheet:view==='video'?video:view==='board'?board:null;
+  if(shown){shown.classList.remove('view-enter');void shown.offsetWidth;shown.classList.add('view-enter');}
   syncTabbar(view);
 }
 
@@ -1622,7 +1789,7 @@ async function openPlayerCard(name, preferTab){
 
   document.getElementById('playerCardName').textContent=name;
   document.getElementById('playerCardCareer').textContent='';
-  document.getElementById('playerCardBody').innerHTML='<div class="data-loading" style="display:block;"><div class="loading-spinner"></div><p>Loading player…</p></div>';
+  document.getElementById('playerCardBody').innerHTML='<div class="data-loading" style="display:block;"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Loading player…</p></div>';
 
   try{
     const results=await Promise.all([
@@ -1678,7 +1845,7 @@ function sectionSeasonTable(seasons){
       <td>${vch}${s.chExec?' · '+s.chExec+'%':''}</td>
     </tr>`;
   }).join('');
-  return `<div class="pc-section"><div class="pc-section-title">📅 By Season</div>
+  return `<div class="pc-section"><div class="pc-section-title"><svg class="icon"><use href="#i-cal"/></svg> By Season</div>
     <div class="pc-season-table-wrap"><table class="pc-season-table">
       <thead><tr><th>Season</th><th>Sess</th><th>Pitches</th><th>Exec</th><th>FA mph·ex</th><th>BB mph·ex</th><th>CH mph·ex</th></tr></thead>
       <tbody>${rows}</tbody></table></div></div>`;
@@ -1688,7 +1855,7 @@ function sectionTrends(seasons){
   const single=seasons.length<2;
   const note=single?'<div class="pc-single-note">One season so far — trend lines build as more seasons are added.</div>':'';
   const legend=`<div class="pc-chart-legend"><span><i style="background:var(--fastball);"></i>FA</span><span><i style="background:var(--breaking-ball);"></i>BB</span><span><i style="background:var(--changeup);"></i>CH</span></div>`;
-  return `<div class="pc-section"><div class="pc-section-title">📈 Year-to-Year Trends</div>
+  return `<div class="pc-section"><div class="pc-section-title"><svg class="icon"><use href="#i-chart"/></svg> Year-to-Year Trends</div>
     <div class="pc-charts">
       <div class="pc-chart-card"><div class="pc-chart-head"><span>Execution %</span>${legend}</div>
         <div class="pc-chart"><svg id="pcExecChart" viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"></svg></div>${note}</div>
@@ -1703,14 +1870,14 @@ function sectionCommand(d){
   const seasons=d.seasons||[];
   const yearBtns=['<button class="pc-year-btn" data-y="" onclick="setPlayerLocYear(\'\')">All</button>']
     .concat(seasons.map(s=>`<button class="pc-year-btn" data-y="${s.season}" onclick="setPlayerLocYear('${s.season}')">${s.season}</button>`)).join('');
-  return `<div class="pc-section"><div class="pc-section-title">🎯 Command by Zone</div>
+  return `<div class="pc-section"><div class="pc-section-title"><svg class="icon"><use href="#i-target"/></svg> Command by Zone</div>
     <div class="pc-year-row" id="pcYearRow">${yearBtns}</div>
     <div class="heat-grids" id="pcHeat"></div></div>`;
 }
 
 function sectionManage(){
-  return `<div class="pc-section"><div class="pc-section-title">⚙ Session Data</div>
-    <button class="smgr-open-btn" onclick="openSessionMgr(playerCardCurrentName)">⚙ Manage Sessions (current season)</button></div>`;
+  return `<div class="pc-section"><div class="pc-section-title"><svg class="icon"><use href="#i-gear"/></svg> Session Data</div>
+    <button class="smgr-open-btn" onclick="openSessionMgr(playerCardCurrentName)"><svg class="icon"><use href="#i-gear"/></svg> Manage Sessions (current season)</button></div>`;
 }
 
 function setPlayerLocYear(y){
@@ -1892,13 +2059,39 @@ function wireChartTooltips(svg, cfg){
   svg.addEventListener('click',e=>{ if(!e.target.classList||!e.target.classList.contains('lc-hit')) hide(); });
 }
 
-// Set header height CSS variable for sticky positioning
+// Set header height CSS variables for layout + sticky positioning.
+// --header-visual = the header's current on-screen height (sticky offsets).
+// --header-height = the full-size height (.app top padding) — frozen while
+// the portrait scroll-shrink is active so the page doesn't jump underneath.
+const hdrLandscapeMQ=window.matchMedia('(max-height:500px) and (pointer:coarse)');
+const hdrPhoneMQ=window.matchMedia('(max-width:600px)');
 function updateHeaderHeight(){
   const h=document.querySelector('.brand-header');
-  if(h) document.documentElement.style.setProperty('--header-height',h.offsetHeight+'px');
+  if(!h) return;
+  const el=document.documentElement, px=h.offsetHeight+'px';
+  el.style.setProperty('--header-visual',px);
+  const scrollShrunk=el.classList.contains('hdr-compact')&&!hdrLandscapeMQ.matches;
+  if(!scrollShrunk) el.style.setProperty('--header-height',px);
 }
+// v35 — compact strip header (html.hdr-compact drives the CSS): always in
+// phone landscape; in portrait once scrolled past the fold, with hysteresis
+// (shrink past 80px, expand back above 24px) so it never flutters.
+function updateHeaderCompact(){
+  const el=document.documentElement;
+  const was=el.classList.contains('hdr-compact');
+  let want=false;
+  if(hdrLandscapeMQ.matches) want=true;
+  else if(hdrPhoneMQ.matches) want=was?window.scrollY>24:window.scrollY>80;
+  if(want!==was){
+    el.classList.toggle('hdr-compact',want);
+    updateHeaderHeight();
+    setTimeout(updateHeaderHeight,220); // re-measure after the padding transition
+  }
+}
+updateHeaderCompact();
 updateHeaderHeight();
-window.addEventListener('resize',updateHeaderHeight);
+window.addEventListener('resize',()=>{updateHeaderCompact();updateHeaderHeight();});
+window.addEventListener('scroll',updateHeaderCompact,{passive:true});
 // Re-measure once web fonts (Bebas Neue) finish loading — they change the
 // header's height, so the first measurement above can be slightly off and
 // leave the sticky info-bar misaligned until the next resize.
@@ -2146,7 +2339,7 @@ function vmgrRenderExisting(){
     '<div class="smgr-list" style="max-height:160px;">'+vids.map((v,i)=>
       `<div class="smgr-row" style="grid-template-columns:1fr auto;">
         <div class="smgr-row-info">${normDateKey(v.date)||v.date}<br><span class="dim">${String(v.url||'').slice(0,46)}…</span></div>
-        <button class="smgr-btn danger" id="vmgrDel-${i}" onclick="vmgrRemove(${i})">🗑 Remove</button>
+        <button class="smgr-btn danger" id="vmgrDel-${i}" onclick="vmgrRemove(${i})"><svg class="icon"><use href="#i-trash"/></svg> Remove</button>
       </div>`).join('')+'</div>';
 }
 
@@ -2256,7 +2449,7 @@ function renderSmgrList(){
     return `<div class="smgr-row">
       <div class="smgr-row-info">${d} · ${s.sessionType||'Bullpen'}<br><span class="dim">${n} pitches</span></div>
       <button class="smgr-btn" onclick="smgrEdit(${i})">✎ Edit</button>
-      <button class="smgr-btn danger" id="smgrDel-${i}" onclick="smgrDelete(${i})">🗑 Delete</button>
+      <button class="smgr-btn danger" id="smgrDel-${i}" onclick="smgrDelete(${i})"><svg class="icon"><use href="#i-trash"/></svg> Delete</button>
     </div>`;
   }).join('')+'</div>';
 }
@@ -2306,7 +2499,7 @@ function smgrEdit(i){
     '<div class="smgr-foot"><button class="smgr-btn" onclick="smgrAddRow()">+ Add Pitch</button><span class="smgr-row-info dim" id="smgrCount"></span></div>';
   document.getElementById('smgrActions').innerHTML=
     '<button class="btn btn-cancel" onclick="renderSmgrList()">← Back</button>'+
-    '<button class="btn btn-sheets-send" onclick="smgrSave()">💾 Save Changes</button>';
+    '<button class="btn btn-sheets-send" onclick="smgrSave()"><svg class="icon"><use href="#i-save"/></svg> Save Changes</button>';
   const tbody=document.getElementById('smgrRows');
   (s.pitches||[]).forEach(p=>tbody.appendChild(smgrRowEl(p)));
   smgrRenumber();
@@ -2470,7 +2663,7 @@ function renderBoard(){
     tiers.innerHTML=rules.tiers.map(t=>{const html='<div class="tier"><div class="n">'+lo+'–'+t[0]+'</div><div class="d">'+t[1]+' day'+(t[1]===1?'':'s')+'</div></div>';lo=t[0]+1;return html;}).join('');
   }
   const foot=document.getElementById('boardFoot');
-  if(foot)foot.innerHTML='Calendar days, not 24-hr periods · daily max '+rules.maxDaily+' ('+rules.maxPlayoff+' playoffs) · max '+rules.maxConsecutive+' consecutive days · MSHSL Bylaw 502 defaults — edit in ⚙️ Team Settings';
+  if(foot)foot.innerHTML='Calendar days, not 24-hr periods · daily max '+rules.maxDaily+' ('+rules.maxPlayoff+' playoffs) · max '+rules.maxConsecutive+' consecutive days · MSHSL Bylaw 502 defaults — edit in <svg class="icon"><use href="#i-gear"/></svg> Team Settings';
   const rec=document.getElementById('boardRecent');
   if(rec){
     const outs=(boardOutings||[]).slice(0,8);
@@ -2661,7 +2854,7 @@ function sprintDel(i){sprintReps.splice(i,1);renderSkill();}
 let bpRounds=[], bpVeloOn=false;
 function bpSwingResult(s){return (s&&typeof s==='object')?s.r:s;}   // back-compat: old data was bare strings
 function bpSwingVelo(s){return (s&&typeof s==='object')?s.v:null;}
-function bpToggleVelo(){bpVeloOn=!bpVeloOn;const b=document.getElementById('bpVeloToggle');if(b){b.classList.toggle('on',bpVeloOn);b.textContent=bpVeloOn?'📡 Exit velo: ON':'📡 Exit velo: off';}}
+function bpToggleVelo(){bpVeloOn=!bpVeloOn;const b=document.getElementById('bpVeloToggle');if(b){b.classList.toggle('on',bpVeloOn);b.innerHTML=bpVeloOn?'<svg class="icon"><use href="#i-bolt"/></svg> Exit velo: ON':'<svg class="icon"><use href="#i-bolt"/></svg> Exit velo: off';}}
 function bpNewRound(){const label=prompt('Round label (e.g. "Free swings", "Oppo / situational"):','Round '+(bpRounds.length+1));if(label===null)return;bpRounds.push({label:label||('Round '+(bpRounds.length+1)),swings:[]});renderSkill();}
 function bpTap(r){
   if(!bpRounds.length)bpRounds.push({label:'Round 1',swings:[]});

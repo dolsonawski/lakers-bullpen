@@ -24,18 +24,49 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
-<!-- v33 launch splash — "Seam Trace". Block M crest + wordmark while a giant
+<!-- v35 icon language — one inline sprite replaces the emoji chrome so every
+     device renders identical district-colored glyphs. Use as:
+     <svg class="icon"><use href="#i-name"/></svg> (inherits currentColor). -->
+<svg style="display:none" aria-hidden="true"><defs>
+  <symbol id="i-players" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c.6-3.4 2.8-5.3 5.5-5.3s4.9 1.9 5.5 5.3"/><circle cx="16.8" cy="9.2" r="2.5"/><path d="M16.5 14.4c2.2.3 3.7 1.9 4.2 4.4"/></symbol>
+  <symbol id="i-ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6.2 5.8c1.9 1.7 3 3.9 3 6.2s-1.1 4.5-3 6.2"/><path d="M17.8 5.8c-1.9 1.7-3 3.9-3 6.2s1.1 4.5 3 6.2"/></symbol>
+  <symbol id="i-bat" viewBox="0 0 24 24"><path d="M4.2 19.8l2-2M7.2 16.8L18.6 4.6c.8-.85 2.1-.8 2.8.1.6.8.55 1.9-.15 2.6L9 18.6l-1.8-1.8z"/></symbol>
+  <symbol id="i-glove" viewBox="0 0 24 24"><path d="M12 3.6a7.6 7.6 0 0 1 7.6 7.6c0 2.6-1.2 4.6-3.2 6l-2.4 1.8A7.1 7.1 0 0 1 4.4 13 7.6 7.6 0 0 1 12 3.6z"/><path d="M8.4 11.8a3.6 3.6 0 0 0 7.2 0"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 2.5v5.3c0 4.4-2.8 7.9-7 10.2-4.2-2.3-7-5.8-7-10.2V5.5z"/><path d="M9 11.6l2.2 2.2 3.8-4.2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 5.2H4.4v1.4A3.4 3.4 0 0 0 7.8 10M17 5.2h2.6v1.4A3.4 3.4 0 0 1 16.2 10"/><path d="M12 14v3M8.5 20h7M10 17h4"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5.5 13.5H11L9.8 21l7.7-11H12z"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.9v2.9M12 18.2v2.9M21.1 12h-2.9M5.8 12H2.9M18.4 5.6l-2 2M7.6 16.4l-2 2M18.4 18.4l-2-2M7.6 7.6l-2-2"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M19.3 12a7.3 7.3 0 1 1-2.1-5.2"/><path d="M19.5 3.4v3.8h-3.8"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 14.5V4M8.2 7.6L12 3.8l3.8 3.8"/><path d="M4.5 14.5V18a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3.5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v10.5M8.2 11.2l3.8 3.8 3.8-3.8"/><path d="M4.5 14.5V18a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3.5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h11.5L20 7.5V20H5z"/><path d="M8 4v5h7.5V4M8 13h8v7H8z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.3"/><path d="M15.7 15.7L21 21"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6.5" width="13" height="11" rx="2"/><path d="M16 10.6l5-2.9v8.6l-5-2.9z"/></symbol>
+  <symbol id="i-install" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M12 8v5.5M9.6 11.2L12 13.6l2.4-2.4"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 6.5h15M9.5 6.2V4.4h5v1.8M6.6 6.5l.9 13h9l.9-13"/><path d="M10 10.5v5.6M14 10.5v5.6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s6.5-6.1 6.5-11a6.5 6.5 0 1 0-13 0c0 4.9 6.5 11 6.5 11z"/><circle cx="12" cy="9.8" r="2.3"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M7.5 14.5l3.6-4 3 2.6 4.4-5.6"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1.1"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6.3" cy="6.3" r="2.4"/><circle cx="6.3" cy="17.7" r="2.4"/><path d="M8.3 8.3L20 20M8.3 15.7L20 4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 6.5a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+</defs></svg>
+<!-- v35 launch splash — "Seam Trace". Block M crest + wordmark while a giant
      line-art baseball stitches on as the loading meter. Gated on the Players
      hub fetch (lb:players-ready event) so the app never reveals onto the
-     players spinner: min dwell 2.9s, holds until data, 8s cap. Shown once per
-     session (sessionStorage gate in the boot script below), tap-to-skip, and
-     skipped entirely under prefers-reduced-motion. Removed from the DOM after. -->
+     players spinner: min dwell 5.8s, holds until data, 10s cap. Seams render
+     as a double groove with tight stacked chevron stitches (vertex pointing
+     along the seam) built at runtime from the invisible sp-guide paths.
+     Tap-to-skip, and skipped entirely under prefers-reduced-motion.
+     Removed from the DOM after. -->
 <div class="splash" id="splash" aria-hidden="true">
   <div class="sp-ballwrap">
     <svg class="sp-ball" viewBox="0 0 600 600">
       <circle class="sp-orb" pathLength="1" cx="300" cy="300" r="270"/>
-      <path class="sp-seam sp-s1" id="spSeamL" pathLength="1" d="M170 90 C 60 210, 60 390, 170 510"/>
-      <path class="sp-seam sp-s2" id="spSeamR" pathLength="1" d="M430 90 C 540 210, 540 390, 430 510"/>
+      <path class="sp-guide" id="spSeamL" d="M170 90 C 60 210, 60 390, 170 510"/>
+      <path class="sp-guide" id="spSeamR" d="M430 90 C 540 210, 540 390, 430 510"/>
+      <g id="spGrooves"></g>
       <g id="spStitches"></g>
     </svg>
   </div>
@@ -49,16 +80,17 @@
 </div>
 <div class="app">
   <div class="brand-header">
-    <button class="header-gear" id="headerGear" onclick="openSettingsModal()" title="Team Settings">⚙️</button>
+    <button class="header-gear" id="headerGear" onclick="openSettingsModal()" title="Team Settings"><svg class="icon"><use href="#i-gear"/></svg></button>
     <button class="waffle-btn" id="waffleBtn" onclick="toggleWaffleMenu()" title="Switch View"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></button>
     <div class="waffle-menu" id="waffleMenu">
-      <button onclick="switchView(&#39;players&#39;)" id="wvPlayers" class="active-view">👥 Players</button>
-      <button onclick="switchView(&#39;tracker&#39;)" id="wvTracker" class="">⚾ Tracker</button>
-      <button onclick="switchView(&#39;sheet&#39;)" id="wvSheet" class="">🏆 Leaderboard</button>
-      <button onclick="switchView(&#39;board&#39;)" id="wvBoard" class="">🛡️ Availability</button>
-      <button onclick="openSettingsModal()" id="wvSettings" class="">⚙️ Team Settings</button>
-      <button onclick="promptInstall()" id="wvInstall" class="" style="display:none;">📲 Add to Home Screen</button>
+      <button onclick="switchView(&#39;players&#39;)" id="wvPlayers" class="active-view"><svg class="icon"><use href="#i-players"/></svg> Players</button>
+      <button onclick="switchView(&#39;tracker&#39;)" id="wvTracker" class=""><svg class="icon"><use href="#i-ball"/></svg> Tracker</button>
+      <button onclick="switchView(&#39;sheet&#39;)" id="wvSheet" class=""><svg class="icon"><use href="#i-trophy"/></svg> Leaderboard</button>
+      <button onclick="switchView(&#39;board&#39;)" id="wvBoard" class=""><svg class="icon"><use href="#i-shield"/></svg> Availability</button>
+      <button onclick="openSettingsModal()" id="wvSettings" class=""><svg class="icon"><use href="#i-gear"/></svg> Team Settings</button>
+      <button onclick="promptInstall()" id="wvInstall" class="" style="display:none;"><svg class="icon"><use href="#i-install"/></svg> Add to Home Screen</button>
     </div>
+    <img class="brand-crest" src="block-m.png" alt="">
     <div class="brand-school">MINNEWASKA</div>
     <div class="brand-main"><span class="lakers-text">LAKERS</span><span class="baseball-text">BASEBALL</span></div>
     <div class="color-bar"><span class="cb-blue"></span><span class="cb-blue"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-silver"></span><span class="cb-silver"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-blue"></span><span class="cb-blue"></span></div>
@@ -66,10 +98,10 @@
 
   <div class="view-tracker" id="viewTracker">
   <div class="track-mode-seg" id="trackModeSeg">
-    <button data-mode="bullpen" class="on" onclick="setTrackMode('bullpen')">⚾ Bullpen</button>
-    <button data-mode="pop" onclick="setTrackMode('pop')">🧤 Pop Times</button>
-    <button data-mode="sprint" onclick="setTrackMode('sprint')">⚡ Sprints</button>
-    <button data-mode="bp" onclick="setTrackMode('bp')">🏏 BP Rounds</button>
+    <button data-mode="bullpen" class="on" onclick="setTrackMode('bullpen')"><svg class="icon"><use href="#i-ball"/></svg> <span class="seg-full">Bullpen</span><span class="seg-short">Bullpen</span></button>
+    <button data-mode="pop" onclick="setTrackMode('pop')"><svg class="icon"><use href="#i-glove"/></svg> <span class="seg-full">Pop Times</span><span class="seg-short">Pop</span></button>
+    <button data-mode="sprint" onclick="setTrackMode('sprint')"><svg class="icon"><use href="#i-bolt"/></svg> <span class="seg-full">Sprints</span><span class="seg-short">Sprint</span></button>
+    <button data-mode="bp" onclick="setTrackMode('bp')"><svg class="icon"><use href="#i-bat"/></svg> <span class="seg-full">BP Rounds</span><span class="seg-short">BP</span></button>
   </div>
   <div id="bullpenMode">
   <div class="info-bar-sticky">
@@ -128,18 +160,49 @@
   </div>
 
   <div class="controls">
-    <button class="btn btn-generate" id="btnGenerate" onclick="generateSession()">⚾ Build Session</button>
-    <button class="btn btn-randomize" id="btnRandomize" onclick="randomize()" disabled=""><span class="icon">⟳</span> Randomize</button>
+    <button class="btn btn-generate" id="btnGenerate" onclick="generateSession()"><svg class="icon"><use href="#i-ball"/></svg> Build Session</button>
+    <button class="btn btn-randomize" id="btnRandomize" onclick="randomize()" disabled=""><svg class="icon"><use href="#i-refresh"/></svg> Randomize</button>
     <button class="btn btn-reset" id="btnReset" onclick="resetMarks()" disabled="">Reset</button>
-    <button class="btn btn-clear-blanks" id="btnClearBlanks" onclick="clearBlanks()" disabled="">✂ Clear Blanks</button>
+    <button class="btn btn-clear-blanks" id="btnClearBlanks" onclick="clearBlanks()" disabled=""><svg class="icon"><use href="#i-scissors"/></svg> Clear Blanks</button>
   </div>
   <div id="sheetsButtonTop" style="display:none;padding:0 0 16px;">
-    <button class="btn-action primary full" onclick="openSheetsModal()">💾 Save Session</button>
+    <button class="btn-action primary full" onclick="openSheetsModal()"><svg class="icon"><use href="#i-save"/></svg> Save Session</button>
   </div>
 
-  <div class="rule-note" id="ruleNote">⚡ Session order: Windup (FA → BB → CH) then Stretch (FA → BB → CH) · Reps within each group are shuffled · Use Randomize to re-shuffle</div>
+  <div class="rule-note" id="ruleNote"><svg class="icon"><use href="#i-bolt"/></svg> Session order: Windup (FA → BB → CH) then Stretch (FA → BB → CH) · Reps within each group are shuffled · Use Randomize to re-shuffle</div>
 
   <div class="tracker-section" id="trackerSection">
+    <!-- v35 live pad (Decision 4A) — drives Dynamic + Game tracking. Sticky so
+         the pad stays on screen while the log grows underneath. Hidden in
+         Preset mode (the scripted table stays the surface there). -->
+    <div class="live-pad" id="livePad" style="display:none;">
+      <div class="lp-head">
+        <span class="lp-title" id="lpTitle">PITCH 1</span>
+        <span class="lp-sub" id="lpSub"></span>
+        <button class="lp-btn" id="lpUndo" onclick="lpUndo()" style="display:none;">⟲ Undo</button>
+        <button class="lp-btn lp-done" id="lpDone" onclick="lpExitEdit()" style="display:none;">Done</button>
+      </div>
+      <div class="lp-picks">
+        <button class="lp-type t-fastball on" id="lpTypeFA" onclick="lpSetType('FA')">FA</button>
+        <button class="lp-type t-breaking-ball" id="lpTypeBB" onclick="lpSetType('BB')">BB</button>
+        <button class="lp-type t-changeup" id="lpTypeCH" onclick="lpSetType('CH')">CH</button>
+        <span class="lp-delseg">
+          <button id="lpDelS" class="on" onclick="lpSetDel('Stretch')">STR</button>
+          <button id="lpDelW" onclick="lpSetDel('Windup')">WND</button>
+        </span>
+      </div>
+      <div class="lp-body">
+        <div class="zone-grid lp-zone" id="lpZoneGrid">
+          <canvas id="lpZoneCanvas" width="240" height="240"></canvas>
+        </div>
+        <div class="lp-side">
+          <input class="lp-velo" id="lpVelo" type="number" inputmode="numeric" placeholder="MPH (optional)" min="40" max="110" step="1">
+          <button class="lp-res ok" onclick="lpLogResult('exec')">✓ Executed</button>
+          <button class="lp-res no" onclick="lpLogResult('notexec')">✗ Missed</button>
+          <div class="lp-hint">Tap the zone: logs location + result and advances. Type &amp; delivery stay until changed. Tap a # in the log to fix a pitch.</div>
+        </div>
+      </div>
+    </div>
     <div class="summary-panel">
       <div class="summary-section-label">Pitch Usage</div>
       <div class="summary-by-type" id="summaryByType"></div>
@@ -156,7 +219,7 @@
     <div class="stats-bar" id="statsBar"></div>
     <div class="location-map-panel" id="locationMapPanel" style="display:none;">
       <div class="location-map-header">
-        <span class="location-map-title">📍 Pitch Location Map</span>
+        <span class="location-map-title"><svg class="icon"><use href="#i-pin"/></svg> Pitch Location Map</span>
         <div class="location-map-filters">
           <button class="map-filter-btn active" id="mapFilterAll" onclick="setMapFilter('All')">All</button>
           <button class="map-filter-btn" id="mapFilterFA" onclick="setMapFilter('FA')" style="color:var(--fastball);border-color:var(--fastball);">FA</button>
@@ -170,7 +233,7 @@
     </div>
       <div class="table-wrap">
       <table>
-        <thead><tr><th>#</th><th>Pitch Type</th><th>Delivery</th><th>Velo / Zone</th><th>✓</th><th>✗</th><th class="del-col">🗑</th></tr></thead>
+        <thead><tr><th>#</th><th>Pitch Type</th><th>Delivery</th><th>Velo / Zone</th><th>✓</th><th>✗</th><th class="del-col"><svg class="icon"><use href="#i-trash"/></svg></th></tr></thead>
         <tbody id="pitchBody"></tbody>
       </table>
       </div>
@@ -188,7 +251,7 @@
       <button class="btn-add-pitch" id="btnAddPitch" onclick="addPitch()">+ Add</button>
     </div>
     <div id="sheetsButtonBottom" style="display:none;padding:16px 0 0;">
-      <button class="btn-action primary full" onclick="openSheetsModal()">💾 Save Session</button>
+      <button class="btn-action primary full" onclick="openSheetsModal()"><svg class="icon"><use href="#i-save"/></svg> Save Session</button>
     </div>
     </div>
 
@@ -202,30 +265,30 @@
     </div>
 
     <div class="skill-panel" id="popPanel" style="display:none;">
-      <div class="skill-panel-head"><span>🧤 Pop Times</span>
+      <div class="skill-panel-head"><span><svg class="icon"><use href="#i-glove"/></svg> Pop Times</span>
         <span class="skill-tgt-seg" id="popTargetSeg"><button data-t="2B" class="on" onclick="popSetTarget('2B')">→ 2B</button><button data-t="3B" onclick="popSetTarget('3B')">→ 3B</button></span></div>
       <div class="skill-rows" id="popRows"></div>
       <div class="skill-actions">
         <button class="btn-stopwatch" id="popWatch" onclick="popWatchTap()">▶ START THROW</button>
-        <button class="btn-action" onclick="popAddManual()">＋ Manual</button>
+        <button class="btn-action" onclick="popAddManual()"><svg class="icon"><use href="#i-plus"/></svg> Manual</button>
       </div>
       <div class="skill-summary" id="popSummary"></div>
     </div>
 
     <div class="skill-panel" id="sprintPanel" style="display:none;">
-      <div class="skill-panel-head"><span>⚡ Sprint Times</span>
+      <div class="skill-panel-head"><span><svg class="icon"><use href="#i-bolt"/></svg> Sprint Times</span>
         <span class="skill-dist-fixed">90 ft · home → first</span></div>
       <div class="skill-rows" id="sprintRows"></div>
       <div class="skill-actions">
         <button class="btn-stopwatch" id="sprintWatch" onclick="sprintWatchTap()">▶ START SPRINT</button>
-        <button class="btn-action" onclick="sprintAddManual()">＋ Manual</button>
+        <button class="btn-action" onclick="sprintAddManual()"><svg class="icon"><use href="#i-plus"/></svg> Manual</button>
       </div>
       <div class="skill-summary" id="sprintSummary"></div>
     </div>
 
     <div class="skill-panel" id="bpPanel" style="display:none;">
-      <div class="skill-panel-head"><span>🏏 BP Rounds</span>
-        <span class="skill-panel-tools"><button class="btn-toggle" id="bpVeloToggle" onclick="bpToggleVelo()">📡 Exit velo: off</button><button class="btn-action" onclick="bpNewRound()">＋ New Round</button></span></div>
+      <div class="skill-panel-head"><span><svg class="icon"><use href="#i-bat"/></svg> BP Rounds</span>
+        <span class="skill-panel-tools"><button class="btn-toggle" id="bpVeloToggle" onclick="bpToggleVelo()"><svg class="icon"><use href="#i-bolt"/></svg> Exit velo: off</button><button class="btn-action" onclick="bpNewRound()"><svg class="icon"><use href="#i-plus"/></svg> New Round</button></span></div>
       <div class="skill-rows" id="bpRows"></div>
       <div class="skill-actions bp-taps">
         <button class="bp-tap h" onclick="bpTap('H')">HARD</button>
@@ -237,7 +300,7 @@
 
     <div class="skill-save">
       <input type="password" id="skillPin" placeholder="PIN" inputmode="numeric" maxlength="4">
-      <button class="btn-action primary" onclick="saveSkillSession()">💾 Save Session</button>
+      <button class="btn-action primary" onclick="saveSkillSession()"><svg class="icon"><use href="#i-save"/></svg> Save Session</button>
       <span class="skill-status" id="skillStatus"></span>
     </div>
     <div class="skill-recent" id="skillRecent"></div>
@@ -247,19 +310,19 @@
   <div class="view-sheet" id="viewSheet">
     <div class="sheet-embed-container">
       <div class="sheet-embed-header">
-        <div class="sheet-embed-title">🏆 Leaderboard</div>
+        <div class="sheet-embed-title"><svg class="icon"><use href="#i-trophy"/></svg> Leaderboard</div>
         <div class="sheet-embed-actions">
           <button class="compact-toggle" id="compactToggle" onclick="toggleCompact()">▥ Compact</button>
-          <button onclick="fetchSheetData()">⟳ Refresh</button>
-          <button onclick="exportSeasonCsv()">⬇ Export CSV</button>
+          <button onclick="fetchSheetData()"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
+          <button onclick="exportSeasonCsv()"><svg class="icon"><use href="#i-download"/></svg> Export CSV</button>
         </div>
       </div>
 
       <div class="lb-actseg" id="lbActSeg">
-        <button data-a="bullpen" class="on" onclick="setLbActivity('bullpen')">⚾ Bullpen</button>
-        <button data-a="pop" onclick="setLbActivity('pop')">🧤 Pop Times</button>
-        <button data-a="sprint" onclick="setLbActivity('sprint')">⚡ Sprints</button>
-        <button data-a="bp" onclick="setLbActivity('bp')">🏏 BP Rounds</button>
+        <button data-a="bullpen" class="on" onclick="setLbActivity('bullpen')"><svg class="icon"><use href="#i-ball"/></svg> <span class="seg-full">Bullpen</span><span class="seg-short">Bullpen</span></button>
+        <button data-a="pop" onclick="setLbActivity('pop')"><svg class="icon"><use href="#i-glove"/></svg> <span class="seg-full">Pop Times</span><span class="seg-short">Pop</span></button>
+        <button data-a="sprint" onclick="setLbActivity('sprint')"><svg class="icon"><use href="#i-bolt"/></svg> <span class="seg-full">Sprints</span><span class="seg-short">Sprint</span></button>
+        <button data-a="bp" onclick="setLbActivity('bp')"><svg class="icon"><use href="#i-bat"/></svg> <span class="seg-full">BP Rounds</span><span class="seg-short">BP</span></button>
       </div>
 
       <div id="lbBullpenWrap">
@@ -276,7 +339,7 @@
       </div>
 
       <div class="data-loading" id="dataLoading" style="display:block;">
-        <div class="loading-spinner"></div>
+        <div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <p>Loading leaderboard…</p>
         <p class="loading-hint">Live from the team database</p>
       </div>
@@ -293,7 +356,7 @@
       </div><!-- end lbBullpenWrap -->
 
       <div id="lbSkillsWrap" style="display:none;">
-        <div class="data-loading" id="lbSkillsLoading" style="display:none;"><div class="loading-spinner"></div><p>Loading skills…</p></div>
+        <div class="data-loading" id="lbSkillsLoading" style="display:none;"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Loading skills…</p></div>
         <div id="lbSkillsHost"></div>
       </div>
 
@@ -303,10 +366,10 @@
   <div class="view-video" id="viewVideo">
     <div class="sheet-embed-container">
       <div class="sheet-embed-header">
-        <div class="sheet-embed-title">🎥 Video Library</div>
+        <div class="sheet-embed-title"><svg class="icon"><use href="#i-video"/></svg> Video Library</div>
         <div class="sheet-embed-actions">
-          <button onclick="openVideoMgr()">➕ Add Video</button>
-          <button onclick="fetchVideoData()">⟳ Refresh</button>
+          <button onclick="openVideoMgr()"><svg class="icon"><use href="#i-plus"/></svg> Add Video</button>
+          <button onclick="fetchVideoData()"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
         </div>
       </div>
 
@@ -317,7 +380,7 @@
       <div class="video-list" id="videoList" style="display:none;"></div>
 
       <div class="data-loading" id="videoLoading" style="display: none;">
-        <div class="loading-spinner"></div>
+        <div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
         <p>Loading video links…</p>
         
       </div>
@@ -336,35 +399,43 @@
   <div class="view-players" id="viewPlayers">
     <div class="sheet-embed-container">
       <div class="sheet-embed-header">
-        <div class="sheet-embed-title">👥 Players</div>
+        <div class="sheet-embed-title"><svg class="icon"><use href="#i-players"/></svg> Players</div>
         <div class="sheet-embed-actions">
-          <button onclick="openImportModal()">⬆ Import Stats</button>
-          <button onclick="switchView('sheet')">🏆 Leaderboard</button>
-          <button onclick="loadPlayersHub(true)">⟳ Refresh</button>
+          <button onclick="openImportModal()"><svg class="icon"><use href="#i-upload"/></svg> Import Stats</button>
+          <button onclick="loadPlayersHub(true)"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
         </div>
       </div>
       <div class="hub-stattabs" id="hubStatTabs">
-        <button data-s="hit" class="on">🏏 Hitting</button>
-        <button data-s="pit">⚾ Pitching</button>
-        <button data-s="fld">🧤 Fielding</button>
+        <button data-s="hit" class="on"><svg class="icon"><use href="#i-bat"/></svg> Hitting</button>
+        <button data-s="pit"><svg class="icon"><use href="#i-ball"/></svg> Pitching</button>
+        <button data-s="fld"><svg class="icon"><use href="#i-glove"/></svg> Fielding</button>
       </div>
+      <!-- v35 two-row filter toolbar (Decision 3A): row 1 = season + table
+           modes; row 2 = search + team chip rail. The rail never wraps — it
+           scrolls sideways — and when teams crowd the row the search field
+           collapses to a magnifier that expands on tap (see player-stats.js). -->
       <div class="players-filters">
-        <select class="players-year" id="playersYear" title="Season"></select>
-        <div class="pcx-seg" id="hubModeSeg">
-          <button data-m="trad" class="on">Traditional</button>
-          <button data-m="adv">Advanced</button>
+        <div class="pf-row">
+          <select class="players-year" id="playersYear" title="Season"></select>
+          <div class="pcx-seg" id="hubModeSeg">
+            <button data-m="trad" class="on">Traditional</button>
+            <button data-m="adv">Advanced</button>
+          </div>
+          <span class="chip pf-qual" id="playersQualChip" title="Hide players below the minimums: 15 PA hitting · 5 IP pitching · 5 TC fielding">Qualifiers</span>
         </div>
-        <input class="players-search" id="playersSearch" placeholder="Search players…">
-        <div class="chips" id="playersLevelChips"><span class="chip on" data-team="">All Teams</span></div>
-        <div class="chips"><span class="chip" id="playersQualChip" title="Hide players below the minimums: 15 PA hitting · 5 IP pitching · 5 TC fielding">Qualifiers</span></div>
+        <div class="pf-row" id="pfSearchRow">
+          <button class="pf-search-btn" id="playersSearchBtn" title="Search players" aria-label="Search players">⌕</button>
+          <input class="players-search" id="playersSearch" placeholder="Search players…">
+          <div class="chips pf-rail" id="playersLevelChips"><span class="chip on" data-team="">All Teams</span></div>
+        </div>
       </div>
-      <div id="playersDrop" class="players-drop">⬆ Drop a GameChanger CSV here to import a team's season</div>
+      <div id="playersDrop" class="players-drop"><svg class="icon"><use href="#i-upload"/></svg> Drop a GameChanger CSV here to import a team's season</div>
       <div class="hub-tablewrap">
         <table class="bref hub-table" id="playersTable" style="display:none;">
           <thead id="playersThead"></thead><tbody id="playersTbody"></tbody><tfoot id="playersTfoot"></tfoot>
         </table>
       </div>
-      <div class="data-loading" id="playersLoading" style="display:block;"><div class="loading-spinner"></div><p>Loading players…</p></div>
+      <div class="data-loading" id="playersLoading" style="display:block;"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Loading players…</p></div>
       <div class="data-empty" id="playersEmpty" style="display:none;"><p>No players yet — import a GameChanger stats file to get started.</p></div>
     </div>
   </div>
@@ -372,14 +443,14 @@
   <div class="view-board" id="viewBoard">
     <div class="sheet-embed-container">
       <div class="sheet-embed-header">
-        <div class="sheet-embed-title">🛡️ Who can pitch today</div>
+        <div class="sheet-embed-title"><svg class="icon"><use href="#i-shield"/></svg> Who can pitch today</div>
         <div class="sheet-embed-actions">
-          <button onclick="openOutingModal()">＋ Log Outing</button>
-          <button onclick="loadBoard(true)">⟳ Refresh</button>
+          <button onclick="openOutingModal()"><svg class="icon"><use href="#i-plus"/></svg> Log Outing</button>
+          <button onclick="loadBoard(true)"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
         </div>
       </div>
       <div class="board-chips" id="boardChips"></div>
-      <div class="data-loading" id="boardLoading" style="display:none;"><div class="loading-spinner"></div><p>Checking availability…</p></div>
+      <div class="data-loading" id="boardLoading" style="display:none;"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Checking availability…</p></div>
       <div id="boardRows"></div>
       <div class="board-tiers" id="boardTiers"></div>
       <div class="board-foot" id="boardFoot"></div>
@@ -392,12 +463,12 @@
       <div class="player-card-top">
         <button class="player-back-btn" onclick="closePlayerCard()">← Leaderboard</button>
         <button class="player-share-btn" id="playerShareBtn" onclick="pcxShareReport(this)">⤴ Share report</button>
-        <button class="player-back-btn" onclick="pcAddVideo()">🎥 Add video</button>
+        <button class="player-back-btn" onclick="pcAddVideo()"><svg class="icon"><use href="#i-video"/></svg> Add video</button>
         <div class="player-card-name" id="playerCardName">Player</div>
         <div class="player-card-career" id="playerCardCareer"></div>
       </div>
       <div class="player-card-body" id="playerCardBody">
-        <div class="data-loading" style="display:block;"><div class="loading-spinner"></div><p>Loading player history…</p></div>
+        <div class="data-loading" style="display:block;"><div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div><p>Loading player history…</p></div>
       </div>
     </div>
   </div>
@@ -405,10 +476,10 @@
 </div><!-- end .app -->
 
 <nav class="tabbar" id="tabbar">
-  <button class="tb" id="tbPlayers" onclick="switchView('players')"><span class="ic">👥</span>Players</button>
-  <button class="tb" id="tbTracker" onclick="switchView('tracker')"><span class="ic">⚾</span>Tracker</button>
-  <button class="tb" id="tbBoard" onclick="switchView('board')"><span class="ic">🛡️</span>Board</button>
-  <button class="tb" id="tbSheet" onclick="switchView('sheet')"><span class="ic">🏆</span>Leaders</button>
+  <button class="tb" id="tbPlayers" onclick="switchView('players')"><span class="ic"><svg class="icon"><use href="#i-players"/></svg></span>Players</button>
+  <button class="tb" id="tbTracker" onclick="switchView('tracker')"><span class="ic"><svg class="icon"><use href="#i-ball"/></svg></span>Tracker</button>
+  <button class="tb" id="tbBoard" onclick="switchView('board')"><span class="ic"><svg class="icon"><use href="#i-shield"/></svg></span>Board</button>
+  <button class="tb" id="tbSheet" onclick="switchView('sheet')"><span class="ic"><svg class="icon"><use href="#i-trophy"/></svg></span>Leaders</button>
 </nav>
 
 <!-- Log Outing Modal -->
@@ -435,11 +506,11 @@
     <div class="modal-subtitle">Coach PIN required</div>
     <div class="modal-field" id="settingsPinField"><label>PIN Code</label><input type="password" id="settingsPin" placeholder="Enter PIN" inputmode="numeric" maxlength="4"></div>
     <div class="modal-status" id="settingsStatus"></div>
-    <button class="btn-action full" id="settingsInstall" onclick="promptInstall()" style="display:none;margin-bottom:10px;">📲 Add to Home Screen</button>
+    <button class="btn-action full" id="settingsInstall" onclick="promptInstall()" style="display:none;margin-bottom:10px;"><svg class="icon"><use href="#i-install"/></svg> Add to Home Screen</button>
     <div id="settingsBody" style="display:none;">
       <div class="settings-row">
         <div><b>Start New Season</b><small>Rolls the app to the next year. Once a season.</small></div>
-        <button class="btn-sheets-send" onclick="closeSettingsModal();openRolloverModal();">🗓 Start…</button>
+        <button class="btn-sheets-send" onclick="closeSettingsModal();openRolloverModal();"><svg class="icon"><use href="#i-cal"/></svg> Start…</button>
       </div>
       <div class="settings-row settings-rules">
         <div style="width:100%;"><b>Pitch-count rest rules</b><small>MSHSL varsity defaults · calendar days · Bylaw 502</small>
@@ -480,7 +551,7 @@
     <div class="modal-status" id="sheetsStatus"></div>
     <div class="modal-actions" id="sheetsActions">
       <button class="btn btn-cancel" onclick="closeSheetsModal()">Cancel</button>
-      <button class="btn btn-sheets-send" onclick="sendToSheets()">💾 Save Session</button>
+      <button class="btn btn-sheets-send" onclick="sendToSheets()"><svg class="icon"><use href="#i-save"/></svg> Save Session</button>
     </div>
   </div>
 </div>
@@ -518,7 +589,7 @@
     <div class="modal-status" id="rolloverStatus"></div>
     <div class="modal-actions">
       <button class="btn btn-cancel" onclick="closeRolloverModal()">Cancel</button>
-      <button class="btn btn-sheets-send" onclick="doRollover()">🗓 Start Season</button>
+      <button class="btn btn-sheets-send" onclick="doRollover()"><svg class="icon"><use href="#i-cal"/></svg> Start Season</button>
     </div>
   </div>
 </div>
@@ -555,7 +626,7 @@
     </div>
     <div class="smgr-meta">
       <div class="modal-field"><label>Date of Session</label><input type="date" id="vmgrDate"></div>
-      <div class="modal-field"><label>&nbsp;</label><button class="btn btn-sheets-send" style="width:100%;" onclick="vmgrAdd()">➕ Add Link</button></div>
+      <div class="modal-field"><label>&nbsp;</label><button class="btn btn-sheets-send" style="width:100%;" onclick="vmgrAdd()"><svg class="icon"><use href="#i-plus"/></svg> Add Link</button></div>
     </div>
     <div class="modal-field">
       <label>Google Drive Link</label>
@@ -578,13 +649,14 @@
 <script src="gamechanger-import.js"></script>
 <script src="player-stats.js"></script>
 <script>
-/* v34 splash controller — "Seam Trace". Plays on EVERY page load.
+/* v35 splash controller — "Seam Trace". Plays on EVERY page load.
    Gated on the Players hub fetch so the app never reveals onto the players
    spinner: player-stats.js dispatches 'lb:players-ready' (and sets
    window.__lbPlayersReady) when loadPlayersHub settles.
-   - Min dwell 2.9s; holds until data is ready; hard cap 8s (past the cap the
+   - Min dwell 5.8s; holds until data is ready; hard cap 10s (past the cap the
      app reveals with its normal loading states).
-   - Stitches along the seams are the progress meter: they ramp toward 85%
+   - Seams are a double groove; tight stacked chevrons (vertex pointing along
+     the seam, like real lacing) are the progress meter: they ramp toward 85%
      while waiting and sew out fast once data lands.
    - Skipped once right after a service-worker-triggered reload
      (lb_splash_skip_once) so a deploy doesn't play it twice back-to-back.
@@ -607,28 +679,58 @@
 
   document.body.classList.add('splash-lock'); // prevent scroll under the splash
 
-  // Sew stitch marks along both seams. Geometry only — reveal is driven below.
+  // Build the seam grooves + chevron stitches along both guide paths.
+  // Geometry only — reveal is driven below.
   var stitches=[];
   try{
+    var NS='http://www.w3.org/2000/svg';
+    var gg=document.getElementById('spGrooves');
     var g=document.getElementById('spStitches');
-    var raw=[];
-    ['spSeamL','spSeamR'].forEach(function(id){
-      var p=document.getElementById(id), len=p.getTotalLength(), n=26;
-      for(var i=0;i<n;i++){
-        var d=len*(i+0.5)/n, pt=p.getPointAtLength(d), pt2=p.getPointAtLength(Math.min(d+1,len));
-        var a=Math.atan2(pt2.y-pt.y,pt2.x-pt.x)+(i%2?62:118)*Math.PI/180, L=11;
-        var ln=document.createElementNS('http://www.w3.org/2000/svg','line');
-        ln.setAttribute('x1',pt.x-Math.cos(a)*L); ln.setAttribute('y1',pt.y-Math.sin(a)*L);
-        ln.setAttribute('x2',pt.x+Math.cos(a)*L); ln.setAttribute('y2',pt.y+Math.sin(a)*L);
-        ln.setAttribute('class','sp-stitch');
-        g.appendChild(ln); raw.push(ln);
+    var CX=300, CY=300;
+    // Local frame at distance d: point + unit tangent, normal flipped to
+    // point away from the ball center so both seams offset symmetrically.
+    function frame(p,d,len){
+      var pt=p.getPointAtLength(d), pt2=p.getPointAtLength(Math.min(d+1,len));
+      var tx=pt2.x-pt.x, ty=pt2.y-pt.y, m=Math.sqrt(tx*tx+ty*ty)||1;
+      tx/=m; ty/=m;
+      var nx=-ty, ny=tx;
+      if((pt.x+nx-CX)*(pt.x+nx-CX)+(pt.y+ny-CY)*(pt.y+ny-CY) <
+         (pt.x-nx-CX)*(pt.x-nx-CX)+(pt.y-ny-CY)*(pt.y-ny-CY)){ nx=-nx; ny=-ny; }
+      return {x:pt.x,y:pt.y,tx:tx,ty:ty,nx:nx,ny:ny};
+    }
+    var raw=[], per=26;
+    ['spSeamL','spSeamR'].forEach(function(id,si){
+      var p=document.getElementById(id), len=p.getTotalLength();
+      // double groove: two offset polylines tracing the seam
+      [5.5,-5.5].forEach(function(off){
+        var d='';
+        for(var s=0;s<=48;s++){
+          var f=frame(p,len*s/48,len);
+          d+=(s?'L':'M')+(f.x+f.nx*off).toFixed(1)+' '+(f.y+f.ny*off).toFixed(1)+' ';
+        }
+        var gp=document.createElementNS(NS,'path');
+        gp.setAttribute('d',d); gp.setAttribute('pathLength','1');
+        gp.setAttribute('class','sp-seam sp-s'+(si+1));
+        gg.appendChild(gp);
+      });
+      // tight stacked chevrons: vertex 7 ahead on the seam line, legs back
+      // to both groove edges — reads as real lacing, not a zig-zag
+      for(var i=0;i<per;i++){
+        var d0=len*(i+0.5)/per, f0=frame(p,d0,len);
+        var vx=f0.x+f0.tx*7,          vy=f0.y+f0.ty*7;
+        var ax=f0.x-f0.tx*7+f0.nx*9,  ay=f0.y-f0.ty*7+f0.ny*9;
+        var bx=f0.x-f0.tx*7-f0.nx*9,  by=f0.y-f0.ty*7-f0.ny*9;
+        var ch=document.createElementNS(NS,'polyline');
+        ch.setAttribute('points',ax.toFixed(1)+','+ay.toFixed(1)+' '+vx.toFixed(1)+','+vy.toFixed(1)+' '+bx.toFixed(1)+','+by.toFixed(1));
+        ch.setAttribute('class','sp-stitch');
+        g.appendChild(ch); raw.push(ch);
       }
     });
     // interleave left/right so both seams sew top-to-bottom together
-    for(var j=0;j<26;j++){ stitches.push(raw[j]); stitches.push(raw[26+j]); }
+    for(var j=0;j<per;j++){ stitches.push(raw[j]); stitches.push(raw[per+j]); }
   }catch(e){}
 
-  var t0=Date.now(), MIN=2900, CAP=8000, lit=0, finished=false;
+  var t0=Date.now(), MIN=5800, CAP=10000, lit=0, finished=false;
   var ready=window.__lbPlayersReady===true;
   var status=document.getElementById('spStatus');
   function setStatus(){ if(status) status.textContent=ready?'READY':'LOADING ROSTER …'; }
@@ -638,8 +740,8 @@
   var sew=setInterval(function(){
     if(finished) return;
     var el=Date.now()-t0;
-    if(el>=1100&&stitches.length){ // seams draw for the first ~1.1s
-      var frac=ready?1:Math.min(0.85,(el-1100)/(CAP-1100));
+    if(el>=2200&&stitches.length){ // orb + grooves draw for the first ~2.2s
+      var frac=ready?1:Math.min(0.85,(el-2200)/(CAP-2200));
       var target=Math.round(stitches.length*frac), burst=ready?3:1;
       while(lit<target&&burst-->0){
         var prev=stitches[lit-1]; if(prev)prev.classList.remove('tip');
