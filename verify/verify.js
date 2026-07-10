@@ -112,13 +112,37 @@ async function runViewport(browser, width, height, label) {
   });
   check('filter toolbar present', toolbar.present, toolbar.tight ? 'collapsed search (pf-tight)' : 'full search field');
 
+  // -- v37: video library removed; players filters one row on desktop
+  const v37 = await page.evaluate(() => {
+    const pf = document.querySelector('.players-filters');
+    const rows = document.querySelectorAll('.players-filters .pf-row');
+    return {
+      videoGone: !document.getElementById('viewVideo'),
+      dir: pf ? getComputedStyle(pf).flexDirection : '',
+      sameLine: rows.length === 2 && Math.abs(rows[0].offsetTop - rows[1].offsetTop) < 4
+    };
+  });
+  check('video library view removed', v37.videoGone);
+  if (width >= 601) check('players filters on one row', v37.dir === 'row' && v37.sameLine, v37.dir);
+  else check('players filters stacked on mobile', v37.dir === 'column', v37.dir);
+
+  // -- v37: scroll-shrink header at every width (was mobile-only)
+  await page.evaluate(() => { document.body.style.minHeight = '3000px'; window.scrollTo(0, 400); });
+  await new Promise(r => setTimeout(r, 400));
+  const compactOn = await page.evaluate(() => document.documentElement.classList.contains('hdr-compact'));
+  await page.evaluate(() => { window.scrollTo(0, 0); });
+  await new Promise(r => setTimeout(r, 400));
+  const compactOff = await page.evaluate(() => { document.body.style.minHeight = ''; return !document.documentElement.classList.contains('hdr-compact'); });
+  check('header shrinks on scroll', compactOn);
+  check('header restores at top', compactOff);
+
   // -- view isolation: switch through every view, exactly one visible
   const VIEWS = [['tracker', 'viewTracker'], ['sheet', 'viewSheet'], ['board', 'viewBoard'], ['players', 'viewPlayers']];
   for (const [name, id] of VIEWS) {
     await page.evaluate(n => window.switchView(n), name);
     await new Promise(r => setTimeout(r, 350));
     const bleed = await page.evaluate(activeId => {
-      const all = ['viewTracker', 'viewSheet', 'viewVideo', 'viewPlayers', 'viewBoard', 'viewPlayer'];
+      const all = ['viewTracker', 'viewSheet', 'viewPlayers', 'viewBoard', 'viewPlayer'];
       const shown = all.filter(i => { const el = document.getElementById(i); return el && getComputedStyle(el).display !== 'none'; });
       return { shown, ok: shown.length === 1 && shown[0] === activeId };
     }, id);

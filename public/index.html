@@ -363,39 +363,6 @@
     </div>
   </div>
 
-  <div class="view-video" id="viewVideo">
-    <div class="sheet-embed-container">
-      <div class="sheet-embed-header">
-        <div class="sheet-embed-title"><svg class="icon"><use href="#i-video"/></svg> Video Library</div>
-        <div class="sheet-embed-actions">
-          <button onclick="openVideoMgr()"><svg class="icon"><use href="#i-plus"/></svg> Add Video</button>
-          <button onclick="fetchVideoData()"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
-        </div>
-      </div>
-
-      <div class="data-filters" id="videoFilters" style="display:none;">
-        <div class="filter-row" id="videoFilterRow"></div>
-      </div>
-
-      <div class="video-list" id="videoList" style="display:none;"></div>
-
-      <div class="data-loading" id="videoLoading" style="display: none;">
-        <div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
-        <p>Loading video links…</p>
-        
-      </div>
-
-      <div class="data-empty" id="videoEmpty" style="display:none;">
-        <p>No video links found.</p>
-      </div>
-
-      <div class="data-error" id="videoError" style="display:none;">
-        <p id="videoErrorMsg"></p>
-        <button onclick="fetchVideoData()">Retry</button>
-      </div>
-
-    </div>
-  </div>
   <div class="view-players" id="viewPlayers">
     <div class="sheet-embed-container">
       <div class="sheet-embed-header">

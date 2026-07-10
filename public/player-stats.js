@@ -408,8 +408,8 @@
   function careerHeader(hasHit, hasPit, hasFld) {
     var chips = [];
     var s = statSummary || {};
-    if (hasHit && s.AVG) { chips.push(['AVG', s.AVG]); chips.push(['OPS', s.OPS]); if (s.HR != null) chips.push(['HR', s.HR]); }
-    if (hasPit && s.ERA) { chips.push(['ERA', d2(s.ERA)]); chips.push(['WHIP', d2(s.WHIP)]); }
+    if (hasHit && s.AVG) { chips.push(['AVG', s.AVG]); if (s.OPS) chips.push(['OPS', s.OPS]); if (s.HR != null) chips.push(['HR', s.HR]); }
+    if (hasPit && s.ERA) { chips.push(['ERA', d2(s.ERA)]); if (s.WHIP != null) chips.push(['WHIP', d2(s.WHIP)]); }
     var bull = playerCardData || {};
     var bp = (bull.seasons || []).reduce(function (a, x) { return a + (x.totalPitches || 0); }, 0);
     if (bp) chips.push(['Pen', bp + 'p']);

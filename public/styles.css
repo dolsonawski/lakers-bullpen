@@ -41,15 +41,13 @@
   .waffle-btn.active span{background:#fff;}
 
   /* View toggle */
-  .view-tracker,.view-sheet,.view-video{transition:opacity 0.2s;}
+  .view-tracker,.view-sheet{transition:opacity 0.2s;}
   /* v35 — 150ms enter transition when switching tabs */
   @keyframes viewIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
   .view-enter{animation:viewIn 0.15s ease-out;}
   @media (prefers-reduced-motion: reduce){.view-enter{animation:none;}}
   .view-sheet{display:none;}
   .view-sheet.active{display:block;}
-  .view-video{display:none;}
-  .view-video.active{display:block;}
   .view-tracker.hidden{display:none;}
 
   /* Waffle dropdown menu */
@@ -60,16 +58,6 @@
   .waffle-menu button.active-view{background:rgba(16,77,151,0.2);color:var(--silver-light);font-weight:700;}
   .waffle-menu button+button{border-top:1px solid var(--border);}
 
-  /* Video list */
-  .video-list{padding:0;}
-  .video-card{border-bottom:1px solid var(--border);padding:14px 16px;transition:background 0.15s;}
-  .video-card:hover{background:rgba(16,77,151,0.06);}
-  .video-card:last-child{border-bottom:none;}
-  .video-card-name{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.04em;color:var(--text);margin-bottom:8px;}
-  .video-links{display:flex;flex-wrap:wrap;gap:8px;}
-  .video-link{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--silver-light);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;text-decoration:none;transition:all 0.15s;}
-  .video-link:hover{background:rgba(16,77,151,0.2);border-color:var(--royal);color:#fff;}
-  .video-link .vl-icon{font-size:0.85rem;}
 
   .sheet-embed-container{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
   .sheet-embed-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface2);}
@@ -435,7 +423,7 @@
     @page{size:letter portrait;margin:0.35in 0.4in;}
     *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
     body{background:#fff;color:#111;font-size:8pt;}.app{padding:0!important;max-width:100%;}
-    .config-panel,.controls,.rule-note,.empty-state,.toast,.modal-overlay,.add-pitch-row,#sheetsButtonBottom,.waffle-btn,.waffle-menu,.view-sheet,.view-video,.view-player,.view-board,.back-to-top,#sheetsButtonTop{display:none!important;}
+    .config-panel,.controls,.rule-note,.empty-state,.toast,.modal-overlay,.add-pitch-row,#sheetsButtonBottom,.waffle-btn,.waffle-menu,.view-sheet,.view-player,.view-board,.back-to-top,#sheetsButtonTop{display:none!important;}
     .tracker-section{display:block!important;}
     .brand-header{position:static!important;width:auto!important;background:#fff!important;border:2px solid #104D97;border-radius:6px;padding:8px 12px 6px;margin-bottom:8px;}
     .brand-header::before{display:none;}.brand-header::after{background:linear-gradient(90deg,#104D97,#028342,#104D97);height:3px;}
@@ -634,6 +622,15 @@
 .players-filters{display:flex;flex-direction:column;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);}
 .pf-row{display:flex;gap:8px;align-items:center;min-width:0;}
 .pf-qual{margin-left:auto;}
+/* v37 — one row on desktop: season · modes · Qualifiers · search · team rail.
+   The search row keeps its own flex context so the .pf-tight space manager
+   in player-stats.js still measures against the leftover width. */
+@media(min-width:601px){
+  .players-filters{flex-direction:row;align-items:center;}
+  .players-filters .pf-row:first-child{flex:none;}
+  .pf-qual{margin-left:0;}
+  #pfSearchRow{flex:1;}
+}
 .chips.pf-rail{flex:1;flex-wrap:nowrap;overflow-x:auto;min-width:0;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .chips.pf-rail::-webkit-scrollbar{display:none;}
 .chips.pf-rail .chip{flex:none;}
@@ -920,7 +917,7 @@ td.hub-foot{font-family:'IBM Plex Mono',monospace;font-size:.55rem;color:var(--t
    v35 — COMPACT STRIP HEADER (Decision 2A)
    html.hdr-compact is set by app.js in two cases:
    · phone landscape (max-height 500px + coarse pointer) — always
-   · portrait mobile, scrolled past the fold — scroll-shrink
+   · any width, scrolled past the fold — scroll-shrink (desktop since v37)
    Crest + LAKERS BASEBALL on one ~44px line; MINNEWASKA and the
    color bar drop. --header-visual tracks the on-screen height for
    sticky elements; --header-height keeps the full-size value so
@@ -938,6 +935,11 @@ html.hdr-compact .brand-main{font-size:1.35rem;letter-spacing:0.07em;line-height
 html.hdr-compact .brand-main .baseball-text{margin-left:6px;}
 html.hdr-compact .waffle-btn{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:30px;height:30px;}
 html.hdr-compact .header-gear{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:32px;height:32px;}
+/* v37 — the scroll-shrink now runs on desktop too; center the crest+wordmark
+   in the full-width strip so it reads as an app bar over the 880px column. */
+@media(min-width:601px){
+  html.hdr-compact .brand-header{justify-content:center;}
+}
 @media (prefers-reduced-motion: reduce){
   .brand-header,.brand-main{transition:none;}
 }

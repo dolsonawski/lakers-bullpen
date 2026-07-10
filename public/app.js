@@ -1012,10 +1012,7 @@ function readLbCache(){try{const r=localStorage.getItem(lbCacheKey());if(!r)retu
 function writeLbCache(data,headers){try{localStorage.setItem(lbCacheKey(),JSON.stringify({data:data,headers:headers,ts:Date.now()}));}catch(e){}}
 let activeFilters={};
 let videoData=[];
-let videoDataFlat=[];
-let videoHeaders=[];
 let videoLoaded=false;
-let videoFilterVal='';
 
 function toggleWaffleMenu(){
   document.getElementById('waffleMenu').classList.toggle('open');
@@ -1031,7 +1028,6 @@ function switchView(view){
   document.getElementById('waffleMenu').classList.remove('open');
   const tracker=document.getElementById('viewTracker');
   const sheet=document.getElementById('viewSheet');
-  const video=document.getElementById('viewVideo');
   const player=document.getElementById('viewPlayer');
   const players=document.getElementById('viewPlayers');
   const btn=document.getElementById('waffleBtn');
@@ -1039,7 +1035,6 @@ function switchView(view){
   // Hide all
   tracker.classList.add('hidden');
   sheet.classList.remove('active');
-  video.classList.remove('active');
   if(player)player.classList.remove('active');
   if(players)players.classList.remove('active');
 
@@ -1047,7 +1042,7 @@ function switchView(view){
   if(board)board.classList.remove('active');
 
   // Update menu highlights (guarded — entries vary by version)
-  ['wvTracker','wvSheet','wvVideo','wvPlayers','wvBoard'].forEach(function(id){
+  ['wvTracker','wvSheet','wvPlayers','wvBoard'].forEach(function(id){
     var el=document.getElementById(id); if(el)el.classList.remove('active-view');
   });
   var wvPlayers=document.getElementById('wvPlayers');
@@ -1068,11 +1063,6 @@ function switchView(view){
     document.getElementById('wvSheet').classList.add('active-view');
     if(typeof setLbActivity==='function')setLbActivity('bullpen');
     if(!dataLoaded)fetchSheetData();
-  }else if(view==='video'){
-    video.classList.add('active');
-    btn.classList.add('active');
-    var wvV=document.getElementById('wvVideo'); if(wvV)wvV.classList.add('active-view');
-    if(!videoLoaded)fetchVideoData();
   }else if(view==='board'){
     if(board)board.classList.add('active');
     btn.classList.add('active');
@@ -1081,7 +1071,7 @@ function switchView(view){
   }
   // v35 — quick enter transition on the view that just became visible
   // (CSS no-ops it under prefers-reduced-motion)
-  var shown=view==='tracker'?tracker:view==='players'?players:view==='sheet'?sheet:view==='video'?video:view==='board'?board:null;
+  var shown=view==='tracker'?tracker:view==='players'?players:view==='sheet'?sheet:view==='board'?board:null;
   if(shown){shown.classList.remove('view-enter');void shown.offsetWidth;shown.classList.add('view-enter');}
   syncTabbar(view);
 }
@@ -1423,123 +1413,20 @@ function refreshNameFilter(visibleNames){
 }
 
 
-/* ========== VIDEO LIBRARY ========== */
+/* ========== VIDEO DATA ==========
+   The standalone Video Library view was removed in v37 — video links live on
+   the player card (pcx-vids) and in the Add-video manager. This loader only
+   fills videoData for the manager's Existing-links list. */
 async function fetchVideoData(){
   const url=getSavedUrl();
-  const loading=document.getElementById('videoLoading');
-  const list=document.getElementById('videoList');
-  const filters=document.getElementById('videoFilters');
-  const empty=document.getElementById('videoEmpty');
-  const error=document.getElementById('videoError');
-
-  loading.style.display='block';
-  list.style.display='none';
-  filters.style.display='none';
-  empty.style.display='none';
-  error.style.display='none';
-
-  if(!url){
-    loading.style.display='none';
-    error.style.display='block';
-    document.getElementById('videoErrorMsg').textContent='Couldn\'t reach the team database. Check your connection and tap Retry.';
-    return;
-  }
-
+  if(!url)return;
   try{
     const json=await gasJsonp(url,{action:'fetch_videos'});
     if(!json.success)throw new Error(json.error||'Failed to fetch');
-    // GAS returns grouped: [{name, videos:[{date,url}]}]
-    videoData=json.data||[];
-    videoDataFlat=[];
-    videoData.forEach(d=>{
-      (d.videos||[]).forEach(v=>videoDataFlat.push({pitcher:d.name,date:v.date,url:v.url}));
-    });
+    videoData=json.data||[];   // grouped: [{name, videos:[{date,url}]}]
     videoLoaded=true;
-    if(videoData.length===0){
-      buildVideoUI();
-      filters.style.display='block';
-      loading.style.display='none';
-      empty.style.display='block';
-      return;
-    }
-    buildVideoUI();
-    applyVideoFilter();
-    loading.style.display='none';
-    filters.style.display='block';
-    list.style.display='block';
-    showToast(`Loaded ${videoDataFlat.length} video entries`);
   }catch(e){
-    loading.style.display='none';
-    error.style.display='block';
-    document.getElementById('videoErrorMsg').textContent='Error: '+e.message;
-  }
-}
-
-function buildVideoUI(){
-  const filterRow=document.getElementById('videoFilterRow');
-  filterRow.innerHTML='';
-  /* Season selector — first field in the filter row */
-  const seasonDivVid=document.createElement('div');
-  seasonDivVid.className='filter-field filter-field-season';
-  seasonDivVid.innerHTML='<label>Season</label><select class="season-filter-select" id="seasonSelectVid"></select>';
-  filterRow.appendChild(seasonDivVid);
-  if(window.populateSeasonSelect)window.populateSeasonSelect(seasonDivVid.querySelector('select'));
-  // Deduplicate and sort by last name (last word of "First Last")
-  const names=[...new Set(videoData.map(d=>d.name))].sort((a,b)=>{
-    const la=a.trim().split(' ').pop().toLowerCase();
-    const lb=b.trim().split(' ').pop().toLowerCase();
-    return la<lb?-1:la>lb?1:0;
-  });
-  if(names.length>=2){
-    const div=document.createElement('div');
-    div.className='filter-field';
-    div.innerHTML=`<label>Pitcher</label><select id="videoFilterName" onchange="applyVideoFilter()"><option value="">All</option></select>`;
-    const sel=div.querySelector('select');
-    names.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
-    filterRow.appendChild(div);
-  }
-  const clearDiv=document.createElement('div');
-  clearDiv.className='filter-field filter-actions';
-  clearDiv.innerHTML='<button class="filter-clear-btn" onclick="clearVideoFilter()">Clear</button>';
-  filterRow.appendChild(clearDiv);
-}
-
-function applyVideoFilter(){
-  const sel=document.getElementById('videoFilterName');
-  videoFilterVal=sel?sel.value:'';
-  renderVideoList();
-}
-
-function clearVideoFilter(){
-  const sel=document.getElementById('videoFilterName');
-  if(sel)sel.value='';
-  videoFilterVal='';
-  renderVideoList();
-}
-
-function renderVideoList(){
-  const list=document.getElementById('videoList');
-  list.innerHTML='';
-
-  const filtered=videoFilterVal?videoData.filter(d=>d.name===videoFilterVal):videoData;
-
-  filtered.forEach(d=>{
-    const card=document.createElement('div');
-    card.className='video-card';
-    const linksHtml=d.videos.map(v=>{
-      const dateDisplay=normDateKey(v.date)||v.date;
-      if(v.url){
-        return `<a class="video-link" href="${safeHref(v.url)}" target="_blank" rel="noopener"><span class="vl-icon">▶</span>${escapeHtml(dateDisplay)}</a>`;
-      }else{
-        return `<span class="video-link" style="opacity:0.5;cursor:default;" title="No link found"><span class="vl-icon">○</span>${escapeHtml(dateDisplay)}</span>`;
-      }
-    }).join('');
-    card.innerHTML=`<div class="video-card-name">${escapeHtml(d.name)}</div><div class="video-links">${linksHtml}</div>`;
-    list.appendChild(card);
-  });
-
-  if(list.children.length===0){
-    list.innerHTML='<div style="padding:24px;text-align:center;color:var(--text-dim);font-family:\'IBM Plex Mono\',monospace;font-size:0.8rem;">No video links found. Make sure columns B-E on the Summary tab have hyperlinked dates.</div>';
+    // leave videoLoaded false — the manager refetches on next open
   }
 }
 
@@ -1773,7 +1660,6 @@ async function openPlayerCard(name, preferTab){
   document.getElementById('waffleMenu').classList.remove('open');
   document.getElementById('viewTracker').classList.add('hidden');
   document.getElementById('viewSheet').classList.remove('active');
-  document.getElementById('viewVideo').classList.remove('active');
   var playersV=document.getElementById('viewPlayers'); if(playersV)playersV.classList.remove('active');
   var boardV=document.getElementById('viewBoard'); if(boardV)boardV.classList.remove('active');
   const player=document.getElementById('viewPlayer');
@@ -2062,7 +1948,6 @@ function wireChartTooltips(svg, cfg){
 // --header-height = the full-size height (.app top padding) — frozen while
 // the portrait scroll-shrink is active so the page doesn't jump underneath.
 const hdrLandscapeMQ=window.matchMedia('(max-height:500px) and (pointer:coarse)');
-const hdrPhoneMQ=window.matchMedia('(max-width:600px)');
 function updateHeaderHeight(){
   const h=document.querySelector('.brand-header');
   if(!h) return;
@@ -2072,14 +1957,15 @@ function updateHeaderHeight(){
   if(!scrollShrunk) el.style.setProperty('--header-height',px);
 }
 // v35 — compact strip header (html.hdr-compact drives the CSS): always in
-// phone landscape; in portrait once scrolled past the fold, with hysteresis
+// phone landscape; otherwise once scrolled past the fold, with hysteresis
 // (shrink past 80px, expand back above 24px) so it never flutters.
+// v37: scroll-shrink applies at every width — desktop included.
 function updateHeaderCompact(){
   const el=document.documentElement;
   const was=el.classList.contains('hdr-compact');
-  let want=false;
+  let want;
   if(hdrLandscapeMQ.matches) want=true;
-  else if(hdrPhoneMQ.matches) want=was?window.scrollY>24:window.scrollY>80;
+  else want=was?window.scrollY>24:window.scrollY>80;
   if(want!==was){
     el.classList.toggle('hdr-compact',want);
     updateHeaderHeight();
@@ -2281,7 +2167,7 @@ async function doRollover(){
     // Refresh selects + data for the new season
     if(window.populateSeasonSelect)document.querySelectorAll('.season-filter-select').forEach(window.populateSeasonSelect);
     dataLoaded=false;videoLoaded=false;
-    setTimeout(()=>{closeRolloverModal();if(currentView==='sheet')fetchSheetData();else if(currentView==='video')fetchVideoData();},900);
+    setTimeout(()=>{closeRolloverModal();if(currentView==='sheet')fetchSheetData();},900);
   }catch(e){rolloverStatus('Error: '+e.message,'error');}
 }
 
