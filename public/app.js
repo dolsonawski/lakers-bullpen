@@ -117,9 +117,6 @@ function zoneLabel20(row,col){
 const ZONE_LABELS_20=[];
 for(let r=0;r<ZONE_SIZE;r++)for(let c=0;c<ZONE_SIZE;c++)ZONE_LABELS_20.push(zoneLabel20(r,c));
 
-// Keep the old name references working throughout the codebase
-const ZONE_LABELS_5=ZONE_LABELS_20;
-
 function isStrikeCell(flatIdx){
   const r=Math.floor(flatIdx/ZONE_SIZE),c=flatIdx%ZONE_SIZE;
   return r>=SZ_R0&&r<=SZ_R1&&c>=SZ_C0&&c<=SZ_C1;
@@ -1008,8 +1005,9 @@ let sortCol='';
 let sortDir='desc';
 let dataLoaded=false;
 /* #1 — localStorage cache so the leaderboard paints instantly between visits.
-   Keyed by season; refreshed in the background after a cache hit. */
-function lbCacheKey(){const si=window.__seasonInfo;return 'lb_cache_'+(si?si.selected:'cur');}
+   Keyed by season; refreshed in the background after a cache hit.
+   v2 suffix: names switched to First Last — don't repaint stale Last, First rows. */
+function lbCacheKey(){const si=window.__seasonInfo;return 'lb_cache2_'+(si?si.selected:'cur');}
 function readLbCache(){try{const r=localStorage.getItem(lbCacheKey());if(!r)return null;const o=JSON.parse(r);if(!o||!o.data)return null;return o;}catch(e){return null;}}
 function writeLbCache(data,headers){try{localStorage.setItem(lbCacheKey(),JSON.stringify({data:data,headers:headers,ts:Date.now()}));}catch(e){}}
 let activeFilters={};
@@ -2306,6 +2304,9 @@ function vmgrSeasonGuard(){
 
 function openVideoMgr(){
   if(!vmgrSeasonGuard())return;
+  // videoData feeds the Existing-links list but nothing loads it on boot —
+  // fetch on first open so saved links actually show up.
+  if(!videoLoaded)fetchVideoData().then(()=>vmgrRenderExisting());
   // Pitcher list mirrors the tracker roster dropdown
   const src=document.getElementById('pitcher');
   const sel=document.getElementById('vmgrPitcher');

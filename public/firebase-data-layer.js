@@ -80,13 +80,6 @@
   /* ── 3. NAME HELPERS ─────────────────────────────────────── */
   function docId(name) { return String(name).trim().replace(/[^a-zA-Z0-9]+/g, '_'); }
 
-  function toLastFirst(name) {
-    var n = String(name).trim();
-    if (n.indexOf(',') !== -1) return n;
-    var w = n.split(/\s+/);
-    if (w.length < 2) return n;
-    return w[w.length - 1] + ', ' + w.slice(0, -1).join(' ');
-  }
   function toFirstLast(name) {
     var n = String(name).trim();
     if (n.indexOf(',') === -1) return n;
@@ -407,7 +400,7 @@
       snap.forEach(function (doc) {
         var d = doc.data();
         data.push({
-          'Name': toLastFirst(d.name || doc.id.replace(/_/g, ' ')),
+          'Name': toFirstLast(d.name || doc.id.replace(/_/g, ' ')),
           'Exec.': d.exec || 0,
           'FA Avg': d.faAvg || 0, 'FA Exec.': d.faExec || 0,
           'CB Avg': d.cbAvg || 0, 'CB Exec.': d.cbExec || 0,
@@ -565,7 +558,7 @@
       // Chronological (oldest → newest) so trend charts read left-to-right
       seasons.sort(function (a, b) { return Number(a.season) - Number(b.season); });
       videos.sort(function (a, b) { return String(b.season).localeCompare(String(a.season)) || String(b.date).localeCompare(String(a.date)); });
-      return { success: true, name: toLastFirst(name), seasons: seasons, zones: zones, videos: videos };
+      return { success: true, name: toFirstLast(name), seasons: seasons, zones: zones, videos: videos };
     },
 
     // ── GAME STATS (GameChanger imports) ───────────────────────
@@ -679,7 +672,7 @@
       var data = [];
       snap.forEach(function (doc) {
         var d = doc.data();
-        data.push({ name: toLastFirst(d.name || ''), videos: d.videos || [] });
+        data.push({ name: toFirstLast(d.name || ''), videos: d.videos || [] });
       });
       data.sort(function (a, b) { return lastNameSort(a.name, b.name); });
       return { success: true, data: data };
@@ -745,10 +738,13 @@
     },
     fetch_skill_sessions: async function (params) {
       var snap = await db.collection('seasons').doc(SELECTED_SEASON).collection('skillSessions').get();
+      // Stored player names are canonical First Last — normalize the filter so
+      // "Last, First" callers still match.
+      var wantPlayer = params.player ? toFirstLast(String(params.player)).trim() : null;
       var data = [];
       snap.forEach(function (doc) {
         var d = doc.data();
-        if (params.player && d.player !== params.player) return;
+        if (wantPlayer && d.player !== wantPlayer) return;
         if (params.kind && d.kind !== params.kind) return;
         data.push({ id: doc.id, player: d.player, date: d.date, kind: d.kind, data: d.data || {} });
       });

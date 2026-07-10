@@ -1052,9 +1052,18 @@ html.hdr-compact .header-gear{top:50%;transform:translateY(-50%);right:max(10px,
 @keyframes spFade{to{opacity:1;}}
 
 @media (prefers-reduced-motion: reduce){
-  /* Belt-and-suspenders: the boot script skips the splash entirely under
-     reduce-motion, but if it ever renders, don't animate or trap the view. */
-  .splash{display:none !important;}
+  /* Motion-reduced splash: everything shown at rest (no spin, no scale/translate
+     entrances). The stitch meter still fills via opacity so loading still reads.
+     Desktops with OS animation effects off hit this path — don't hide the splash. */
+  .sp-ball{animation:none;}
+  .sp-orb,.sp-seam{animation:none;stroke-dashoffset:0;}
+  .sp-stitch{transition:none;}
+  .sp-stitch.tip{animation:none;filter:none;}
+  .sp-crest{animation:none;opacity:1;transform:none;}
+  .sp-word{animation:none;opacity:1;transform:none;}
+  .sp-bar span{animation:none;transform:none;}
+  .sp-status{animation:none;opacity:1;}
+  .splash.sp-done{animation:none;opacity:0;visibility:hidden;pointer-events:none;transition:opacity 0.3s ease-in,visibility 0s linear 0.3s;}
 }
 
 /* Lock background scroll while the splash is showing. */

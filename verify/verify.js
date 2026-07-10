@@ -34,11 +34,7 @@ function check(name, ok, detail) {
   if (!ok) failures.push(name + (detail ? ' — ' + detail : ''));
 }
 
-async function runViewport(browser, width, height, label) {
-  console.log('\n== ' + label + ' (' + width + 'x' + height + ') ==');
-  const page = await browser.newPage();
-  await page.setViewport({ width, height, deviceScaleFactor: 1 });
-
+async function setupPage(page) {
   const errors = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
@@ -56,6 +52,14 @@ async function runViewport(browser, width, height, label) {
       req.continue();
     }
   });
+  return errors;
+}
+
+async function runViewport(browser, width, height, label) {
+  console.log('\n== ' + label + ' (' + width + 'x' + height + ') ==');
+  const page = await browser.newPage();
+  await page.setViewport({ width, height, deviceScaleFactor: 1 });
+  const errors = await setupPage(page);
 
   await page.goto('http://127.0.0.1:8135/', { waitUntil: 'domcontentloaded' });
 
@@ -161,11 +165,48 @@ async function runViewport(browser, width, height, label) {
   });
   check('leaderboard shows seeded pitcher', sheet);
 
+  // -- v36: names render First Last (stored 'Berg, Tyler' must display 'Tyler Berg')
+  const lbName = await page.evaluate(() => {
+    const cell = document.querySelector('#dataBody tr td');
+    return cell ? cell.textContent.replace('▶', '').trim() : null;
+  });
+  check('leaderboard name is First Last', lbName === 'Tyler Berg', String(lbName));
+
+  // -- v36: player card opened from the leaderboard titles First Last
+  await page.evaluate(() => { document.querySelector('#dataBody tr td').click(); });
+  await new Promise(r => setTimeout(r, 800));
+  const cardTitle = await page.evaluate(() => document.getElementById('playerCardName').textContent.trim());
+  check('player card title First Last via leaderboard', cardTitle === 'Tyler Berg', cardTitle);
+
   // -- console errors (whole run)
   const realErrors = errors.filter(e => !e.includes('favicon'));
   check('no console/page errors', realErrors.length === 0, realErrors.slice(0, 3).join(' | '));
 
   await page.screenshot({ path: path.join(__dirname, 'shot-' + label + '.png'), fullPage: false });
+  await page.close();
+}
+
+// v36: under prefers-reduced-motion the splash must still play (statically),
+// not be skipped — that was the desktop "splash never shows" bug.
+async function runReducedMotion(browser) {
+  console.log('\n== reduced-motion (1400x900) ==');
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1400, height: 900, deviceScaleFactor: 1 });
+  await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+  await setupPage(page);
+  await page.goto('http://127.0.0.1:8135/', { waitUntil: 'domcontentloaded' });
+  const sp = await page.evaluate(() => {
+    const s = document.getElementById('splash');
+    const ball = document.querySelector('.sp-ball');
+    return {
+      present: !!s, shown: !!s && getComputedStyle(s).display !== 'none',
+      ballAnim: ball ? getComputedStyle(ball).animationName : ''
+    };
+  });
+  check('reduced-motion: splash still plays', sp.present && sp.shown);
+  check('reduced-motion: ball spin disabled', sp.ballAnim === 'none', sp.ballAnim);
+  const gone = await page.waitForFunction(() => !document.getElementById('splash'), { timeout: 13000 }).then(() => true).catch(() => false);
+  check('reduced-motion: splash resolves and is removed', gone);
   await page.close();
 }
 
@@ -175,6 +216,7 @@ async function runViewport(browser, width, height, label) {
   try {
     await runViewport(browser, 1400, 900, 'desktop');
     await runViewport(browser, 390, 844, 'mobile');
+    await runReducedMotion(browser);
   } finally {
     await browser.close();
     server.close();

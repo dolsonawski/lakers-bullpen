@@ -58,7 +58,7 @@
      players spinner: min dwell 5.8s, holds until data, 10s cap. Seams render
      as a double groove with tight stacked chevron stitches (vertex pointing
      along the seam) built at runtime from the invisible sp-guide paths.
-     Tap-to-skip, and skipped entirely under prefers-reduced-motion.
+     Tap-to-skip; motion-reduced (fades only) under prefers-reduced-motion.
      Removed from the DOM after. -->
 <div class="splash" id="splash" aria-hidden="true">
   <div class="sp-ballwrap">
@@ -660,7 +660,9 @@
      while waiting and sew out fast once data lands.
    - Skipped once right after a service-worker-triggered reload
      (lb_splash_skip_once) so a deploy doesn't play it twice back-to-back.
-   - Skipped under prefers-reduced-motion (accessibility).
+   - Under prefers-reduced-motion the CSS strips spin/scale/translate but the
+     splash still plays (opacity-only stitch meter) — desktops with OS
+     "animation effects" off would otherwise never see it.
    - Tap/click/key anywhere skips immediately (spinner may show — user's call).
    - Element is removed from the DOM once done so it never intercepts taps.
    - window.__lbSplashActive tells the SW updater a splash is playing so its
@@ -668,13 +670,12 @@
 (function(){
   var splash=document.getElementById('splash');
   if(!splash) return;
-  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var skipOnce=false;
   try{
     skipOnce=sessionStorage.getItem('lb_splash_skip_once')==='1';
     if(skipOnce) sessionStorage.removeItem('lb_splash_skip_once');
   }catch(e){}
-  if(skipOnce||reduce){ splash.parentNode&&splash.parentNode.removeChild(splash); return; }
+  if(skipOnce){ splash.parentNode&&splash.parentNode.removeChild(splash); return; }
   window.__lbSplashActive=true;
 
   document.body.classList.add('splash-lock'); // prevent scroll under the splash
