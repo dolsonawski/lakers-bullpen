@@ -953,7 +953,7 @@
       (velos.length ? '<div><b>' + Math.max.apply(null, velos).toFixed(1) + '</b><span>top EV</span></div>' : '') + '</span></div>' +
       sk_trend(perSession.map(function (p) { return p.hardPct; }), false) +
       '<div class="sk-rows">' + rows + '</div>' +
-      '<div class="sk-note">Practice-cage charting — not game contact. Hard/Weak/Miss + exit velo (Pocket Radar) from the Bullpen tab.</div></div>';
+      '<div class="sk-note">Practice-cage charting — not game contact. Hard/Weak/Miss + exit velo (Pocket Radar) from the Tracker tab.</div></div>';
   };
 
   window.skillFieldSection = function () {

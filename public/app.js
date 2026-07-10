@@ -2653,7 +2653,7 @@ async function loadSkillsLeaderboard(kind){
 
 function renderSkillsLeaderboard(kind,rows){
   const host=document.getElementById('lbSkillsHost');
-  if(!rows.length){host.innerHTML='<div class="data-empty" style="display:block;"><p>No '+({pop:'pop-time',sprint:'sprint',bp:'BP'})[kind]+' sessions saved this season yet. Log one from the Bullpen tab.</p></div>';return;}
+  if(!rows.length){host.innerHTML='<div class="data-empty" style="display:block;"><p>No '+({pop:'pop-time',sprint:'sprint',bp:'BP'})[kind]+' sessions saved this season yet. Log one from the Tracker tab.</p></div>';return;}
   let head,body,foot;
   if(kind==='pop'||kind==='sprint'){
     rows.sort((a,b)=>a.best-b.best); // fastest first
