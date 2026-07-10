@@ -130,11 +130,47 @@ async function runViewport(browser, width, height, label) {
   await page.evaluate(() => { document.body.style.minHeight = '3000px'; window.scrollTo(0, 400); });
   await new Promise(r => setTimeout(r, 400));
   const compactOn = await page.evaluate(() => document.documentElement.classList.contains('hdr-compact'));
+  check('header shrinks on scroll', compactOn);
+
+  // -- v39 (1A): desktop-only nav links inside the compact strip
+  const nav = await page.evaluate(() => {
+    const n = document.getElementById('hdrNav');
+    return { shown: !!n && getComputedStyle(n).display !== 'none', count: n ? n.querySelectorAll('button').length : 0 };
+  });
+  if (width >= 601) {
+    check('compact strip shows nav links', nav.shown && nav.count === 4, nav.count + ' links');
+    await page.evaluate(() => { document.querySelector('#hdrNav [data-view="sheet"]').click(); });
+    await new Promise(r => setTimeout(r, 400));
+    const navSwitch = await page.evaluate(() => ({
+      sheetShown: getComputedStyle(document.getElementById('viewSheet')).display !== 'none',
+      navOn: document.querySelector('#hdrNav [data-view="sheet"]').classList.contains('on')
+    }));
+    check('strip nav switches view + highlights', navSwitch.sheetShown && navSwitch.navOn);
+    await page.evaluate(() => window.switchView('players'));
+    await new Promise(r => setTimeout(r, 300));
+  } else {
+    check('strip nav hidden on mobile', !nav.shown);
+  }
+
   await page.evaluate(() => { window.scrollTo(0, 0); });
   await new Promise(r => setTimeout(r, 400));
   const compactOff = await page.evaluate(() => { document.body.style.minHeight = ''; return !document.documentElement.classList.contains('hdr-compact'); });
-  check('header shrinks on scroll', compactOn);
   check('header restores at top', compactOff);
+
+  // -- v39 (2A): offline banner shows while offline, clears content beneath
+  const offline = await page.evaluate(async () => {
+    window.dispatchEvent(new Event('offline'));
+    await new Promise(r => setTimeout(r, 100));
+    const b = document.getElementById('offlineBanner');
+    const shown = b && getComputedStyle(b).display !== 'none';
+    const visual = getComputedStyle(document.documentElement).getPropertyValue('--header-visual');
+    window.dispatchEvent(new Event('online'));
+    await new Promise(r => setTimeout(r, 100));
+    const hidden = getComputedStyle(b).display === 'none';
+    return { shown, hidden, visual };
+  });
+  check('offline banner appears on offline event', offline.shown);
+  check('offline banner hides on reconnect', offline.hidden);
 
   // -- view isolation: switch through every view, exactly one visible
   const VIEWS = [['tracker', 'viewTracker'], ['sheet', 'viewSheet'], ['board', 'viewBoard'], ['players', 'viewPlayers']];
@@ -194,13 +230,42 @@ async function runViewport(browser, width, height, label) {
     const cell = document.querySelector('#dataBody tr td');
     return cell ? cell.textContent.replace('▶', '').trim() : null;
   });
-  check('leaderboard name is First Last', lbName === 'Tyler Berg', String(lbName));
+  check('leaderboard name is First Last', (lbName || '').indexOf('Tyler Berg') === 0, String(lbName));
+
+  // -- v39 (3A): recency under the name, trend delta beside the exec pill
+  const lbTrend = await page.evaluate(() => {
+    const row = document.querySelector('#dataBody tr');
+    const ago = row ? row.querySelector('.lb-ago') : null;
+    const delta = row ? row.querySelector('.lb-delta') : null;
+    return { ago: ago ? ago.textContent : null, delta: delta ? delta.textContent : null };
+  });
+  check('leaderboard shows recency', lbTrend.ago === 'THREW 2D AGO', String(lbTrend.ago));
+  check('leaderboard shows season delta', lbTrend.delta === '▲ 3.1', String(lbTrend.delta));
 
   // -- v36: player card opened from the leaderboard titles First Last
   await page.evaluate(() => { document.querySelector('#dataBody tr td').click(); });
   await new Promise(r => setTimeout(r, 800));
   const cardTitle = await page.evaluate(() => document.getElementById('playerCardName').textContent.trim());
   check('player card title First Last via leaderboard', cardTitle === 'Tyler Berg', cardTitle);
+
+  // -- v39 (4A): bullpen chip on hub pitching rows (visible desktop, hidden mobile)
+  await page.evaluate(() => window.switchView('players'));
+  await new Promise(r => setTimeout(r, 300));
+  await page.evaluate(() => { document.querySelector('#hubStatTabs [data-s="pit"]').click(); });
+  await new Promise(r => setTimeout(r, 400));
+  const pen = await page.evaluate(() => {
+    const chip = document.querySelector('#playersTbody .hub-penchip');
+    return { present: !!chip, shown: chip ? getComputedStyle(chip).display !== 'none' : false, text: chip ? chip.textContent : null };
+  });
+  check('hub pitching row carries pen data', pen.present && /PEN 67% · 9P/.test(pen.text || ''), String(pen.text));
+  check('pen chip ' + (width >= 601 ? 'visible on desktop' : 'hidden on mobile'), width >= 601 ? pen.shown : !pen.shown);
+  await page.evaluate(() => { document.querySelector('#hubStatTabs [data-s="hit"]').click(); });
+
+  // -- v39 (5B): board chip answers "when is he back"
+  await page.evaluate(() => window.switchView('board'));
+  await new Promise(r => setTimeout(r, 800));
+  const boardTxt = await page.evaluate(() => (document.getElementById('viewBoard') || {}).textContent || '');
+  check('board chip shows return day', /✗ Back \w{3} \w{3} \d+/.test(boardTxt), (boardTxt.match(/✗ Back [\w ]{0,12}/) || ['no match'])[0]);
 
   // -- console errors (whole run)
   const realErrors = errors.filter(e => !e.includes('favicon'));

@@ -155,9 +155,15 @@
   function penPitch(n, type, del, zone, res, velo) {
     return { number: n, pitchType: type, delivery: del, zone: zone, result: res, velo: velo };
   }
+  function isoDaysAgo(n) { var d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   STORE['seasons/2026/pitchers/Berg_Tyler'] = { name: 'Berg, Tyler', exec: 66.7,
     faAvg: 78.5, faExec: 75, cbAvg: 66, cbExec: 50, chAvg: 71, chExec: 66.7,
-    faCount: 4, cbCount: 2, chCount: 3, totalPitches: 9 };
+    faCount: 4, cbCount: 2, chCount: 3, totalPitches: 9,
+    recentSessions: [{ date: isoDaysAgo(2), pitches: 9, exec: 67, avgVelo: 74.2 }] };
+  // Prior-season summary → leaderboard trend arrow (66.7 vs 63.6 = ▲ 3.1)
+  STORE['seasons/2025/pitchers/Berg_Tyler'] = { name: 'Berg, Tyler', exec: 63.6, totalPitches: 120 };
+  // Game outing yesterday (86p → 3 days rest) → board shows a return date
+  STORE['seasons/2026/outings/o1'] = { pitcher: 'Tyler Berg', date: isoDaysAgo(1), pitches: 86, season: '2026' };
   STORE['seasons/2026/pitchers/Berg_Tyler/sessions/s1'] = {
     date: '2026-06-20', sessionType: 'Bullpen',
     pitches: [

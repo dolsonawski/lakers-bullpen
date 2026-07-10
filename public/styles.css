@@ -935,10 +935,18 @@ html.hdr-compact .brand-main{font-size:1.35rem;letter-spacing:0.07em;line-height
 html.hdr-compact .brand-main .baseball-text{margin-left:6px;}
 html.hdr-compact .waffle-btn{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:30px;height:30px;}
 html.hdr-compact .header-gear{top:50%;transform:translateY(-50%);right:max(10px,env(safe-area-inset-right));width:32px;height:32px;}
-/* v37 — the scroll-shrink now runs on desktop too; center the crest+wordmark
-   in the full-width strip so it reads as an app bar over the 880px column. */
+/* v39 (pick 1A) — desktop nav in the compact strip: crest+wordmark left,
+   section links right (clearing the absolute waffle button). Hidden at full
+   header size and on phones, where the bottom tab bar owns navigation. */
+.hdr-nav{display:none;}
 @media(min-width:601px){
-  html.hdr-compact .brand-header{justify-content:center;}
+  html.hdr-compact .hdr-nav{display:flex;gap:2px;margin-left:auto;padding-right:44px;}
+  .hdr-nav button{background:transparent;border:none;cursor:pointer;
+    font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:600;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-dim,#7a96b8);padding:8px 11px;border-bottom:2px solid transparent;}
+  .hdr-nav button:hover{color:var(--silver-light);}
+  .hdr-nav button.on{color:#fff;border-bottom-color:var(--green-bright,#03b35a);}
+  .hdr-nav button:focus-visible{outline:2px solid var(--royal-light);outline-offset:2px;border-radius:3px;}
 }
 @media (prefers-reduced-motion: reduce){
   .brand-header,.brand-main{transition:none;}
@@ -1070,3 +1078,28 @@ html.hdr-compact .header-gear{top:50%;transform:translateY(-50%);right:max(10px,
 
 /* Lock background scroll while the splash is showing. */
 body.splash-lock{overflow:hidden;}
+
+/* v39 (pick 2A) — offline banner: docks under the fixed header while the
+   browser is offline. --hdr-raw is the header's own height (set by app.js);
+   --header-visual already includes the banner so sticky elements clear it. */
+.offline-banner{display:none;position:fixed;top:var(--hdr-raw,158px);left:0;right:0;z-index:99;
+  align-items:center;justify-content:center;gap:8px;
+  background:var(--surface2);border-bottom:1px solid var(--border);padding:6px 12px;
+  font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:600;letter-spacing:0.18em;color:var(--silver);}
+body.lb-offline .offline-banner{display:flex;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:var(--changeup,#f59e0b);box-shadow:0 0 8px rgba(245,158,11,0.7);flex:none;}
+
+/* v39 (pick 3A) — leaderboard recency + season trend */
+.lb-ago{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.54rem;letter-spacing:0.08em;color:var(--text-dim);margin-top:2px;}
+.lb-ago.hot{color:var(--green-bright,#03b35a);}
+.lb-delta{font-family:'IBM Plex Mono',monospace;font-size:0.6rem;font-weight:600;white-space:nowrap;}
+.lb-delta.up{color:var(--green-bright,#03b35a);}
+.lb-delta.dn{color:var(--not-executed,#ef4444);}
+.lb-delta.flat{color:var(--text-dim);}
+
+/* v39 (pick 4A) — bullpen chip on hub pitching rows; desktop only */
+.hub-penchip{display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;
+  font-size:0.56rem;font-weight:600;letter-spacing:0.05em;color:var(--royal-light);
+  border:1px solid var(--royal);border-radius:14px;padding:2px 8px;margin-left:8px;vertical-align:1px;}
+.hub-penchip b{color:#fff;font-weight:600;}
+@media(max-width:600px){.hub-penchip{display:none;}}

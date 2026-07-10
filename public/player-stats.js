@@ -58,7 +58,7 @@
   /* =========================================================
      PLAYERS HUB
      ========================================================= */
-  var hubData = [], hubLines = [], hubLoaded = false, hubYears = [];
+  var hubData = [], hubLines = [], hubLoaded = false, hubYears = [], hubPen = {};
   var hubFilters = { q: '', team: '', year: '', qual: false };
   var hubStat = 'hit', hubMode = 'trad', hubSortKey = '', hubSortDir = -1;
 
@@ -162,6 +162,7 @@
       hubData = (res && res.data) || [];
       hubLines = (res && res.statlines) || [];
       hubYears = (res && res.years) || [];
+      hubPen = (res && res.penByYear) || {};
       hubLoaded = true;
       buildHubFilters();
       renderHubGrid();
@@ -302,9 +303,14 @@
       if (vals.length > 1) rateStats[ci] = { min: Math.min.apply(null, vals), max: Math.max.apply(null, vals) };
     });
 
+    // Bullpen chip (v39, pick 4A): pitching rows show pen exec + volume for the
+    // selected season, keyed by normalized name; rides inside the name link.
+    var penMap = hubStat === 'pit' ? (hubPen[String(hubFilters.year)] || {}) : {};
     tbody.innerHTML = rows.map(function (r) {
       var pref = hubStat === 'pit' ? ",'pit'" : hubStat === 'fld' ? ",'fld'" : ",'hit'";
-      var nm = '<a class="hub-pname" onclick="openPlayerCard(' + JSON.stringify(r.name).replace(/"/g, '&quot;') + pref + ')">' + r.name + '</a>';
+      var pen = penMap[String(r.name).trim().toLowerCase()];
+      var penHtml = pen ? '<span class="hub-penchip">PEN <b>' + Math.round(pen.exec) + '%</b> · ' + pen.pitches + 'P</span>' : '';
+      var nm = '<a class="hub-pname" onclick="openPlayerCard(' + JSON.stringify(r.name).replace(/"/g, '&quot;') + pref + ')">' + r.name + penHtml + '</a>';
       var lead = '<td class="lft">' + nm + '</td><td class="lft num">' + (r.num || '') + '</td>' + (showPos ? '<td class="lft"><span class="pos">' + (r.pos || '') + '</span></td>' : '') + '<td class="lft">' + lvlBadge(r.lvl) + '</td>';
       var tds = r.cells.map(function (v, ci) {
         var k = cols[ci], cls = (k === 'Pos' ? 'lft ' : '') + (keyset.indexOf(k) >= 0 ? 'key' : '');

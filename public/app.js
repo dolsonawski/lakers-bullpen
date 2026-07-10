@@ -1006,10 +1006,10 @@ let sortDir='desc';
 let dataLoaded=false;
 /* #1 — localStorage cache so the leaderboard paints instantly between visits.
    Keyed by season; refreshed in the background after a cache hit.
-   v2 suffix: names switched to First Last — don't repaint stale Last, First rows. */
-function lbCacheKey(){const si=window.__seasonInfo;return 'lb_cache2_'+(si?si.selected:'cur');}
+   v3 suffix: rows gained lastDate/prevExec (recency + trend, v39). */
+function lbCacheKey(){const si=window.__seasonInfo;return 'lb_cache3_'+(si?si.selected:'cur');}
 function readLbCache(){try{const r=localStorage.getItem(lbCacheKey());if(!r)return null;const o=JSON.parse(r);if(!o||!o.data)return null;return o;}catch(e){return null;}}
-function writeLbCache(data,headers){try{localStorage.setItem(lbCacheKey(),JSON.stringify({data:data,headers:headers,ts:Date.now()}));}catch(e){}}
+function writeLbCache(data,headers,prevSeason){try{localStorage.setItem(lbCacheKey(),JSON.stringify({data:data,headers:headers,prevSeason:!!prevSeason,ts:Date.now()}));}catch(e){}}
 let activeFilters={};
 let videoData=[];
 let videoLoaded=false;
@@ -1081,6 +1081,10 @@ function syncTabbar(view){
   document.querySelectorAll('#tabbar .tb').forEach(function(b){b.classList.remove('on');});
   var el=document.getElementById(map[view]||'');
   if(el)el.classList.add('on');
+  // v39 (pick 1A): the compact strip's desktop nav mirrors the active view
+  document.querySelectorAll('#hdrNav button').forEach(function(b){
+    b.classList.toggle('on',b.dataset.view===view);
+  });
 }
 
 async function fetchSheetData(){
@@ -1096,6 +1100,7 @@ async function fetchSheetData(){
   const haveCache=cached&&cached.data&&cached.data.length;
   if(haveCache&&!dataLoaded){
     sheetData=cached.data;sheetHeaders=cached.headers||[];
+    window.__lbPrevSeason=!!cached.prevSeason;
     if(sheetHeaders.length===0)sheetHeaders=Object.keys(sheetData[0]);
     sortCol=sheetHeaders[1]||sheetHeaders[0]||'';sortDir='desc';
     buildUI();applyFilters();
@@ -1121,8 +1126,9 @@ async function fetchSheetData(){
     if(!json.success)throw new Error(json.error||'Failed to fetch');
     sheetData=json.data||[];
     sheetHeaders=json.headers||[];
+    window.__lbPrevSeason=!!json.prevSeason;
     dataLoaded=true;
-    writeLbCache(sheetData,sheetHeaders);
+    writeLbCache(sheetData,sheetHeaders,json.prevSeason);
     if(sheetData.length===0){
       buildUI();
       document.getElementById('dataFilters').style.display='block';
@@ -1357,6 +1363,33 @@ function buildUsageBar(fa, cb, ch){
   return`<div class="usage-cell"><div class="usage-stack">${fa>0?`<div class="usage-bar-fa" style="width:${fp}%"></div>`:''}${cb>0?`<div class="usage-bar-cb" style="width:${cp}%"></div>`:''}${ch>0?`<div class="usage-bar-ch" style="width:${hp}%"></div>`:''}</div><div class="usage-labels">${labels}</div></div>`;
 }
 
+/* v39 (pick 3A) — recency + season trend, no new columns.
+   Days since the pitcher's newest recorded session; null when unparseable. */
+function lbDaysAgo(ds){
+  if(!ds)return null;
+  let d=new Date(ds);
+  if(isNaN(d)){
+    const m=String(ds).match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+    if(m)d=new Date(+(m[3].length===2?'20'+m[3]:m[3]),m[1]-1,+m[2]);
+  }
+  if(isNaN(d))return null;
+  const n=Math.floor((Date.now()-d.getTime())/86400000);
+  return n<0?0:n;
+}
+// ▲/▼ exec% vs last season's summary; NEW when a prior season exists but the
+// pitcher wasn't on it. Nothing renders in a program's first tracked season.
+function lbDeltaHtml(d){
+  const cur=Number(d['Exec.']);
+  if(isNaN(cur))return'';
+  const c=cur>1?cur:cur*100;
+  if(d['prevExec']!=null){
+    const p=Number(d['prevExec']), pv=p>1?p:p*100;
+    const diff=Math.round((c-pv)*10)/10;
+    if(!diff)return'';
+    return ' <span class="lb-delta '+(diff>0?'up':'dn')+'" title="vs last season">'+(diff>0?'▲':'▼')+' '+Math.abs(diff).toFixed(1)+'</span>';
+  }
+  return window.__lbPrevSeason?' <span class="lb-delta flat" title="no sessions last season">NEW</span>':'';
+}
 function renderTable(){
   const body=document.getElementById('dataBody');
   body.innerHTML='';
@@ -1378,10 +1411,12 @@ function renderTable(){
       if(h==='fa_count'||h==='cb_count'||h==='ch_count')return;
       const td=document.createElement('td');
       if(i===0){
-        td.innerHTML=`${rawName}<span class="name-expand-arrow">▶</span>`;
+        const ago=lbDaysAgo(d['lastDate']);
+        const agoHtml=ago==null?'':'<span class="lb-ago'+(ago<=3?' hot':'')+'">'+(ago===0?'THREW TODAY':'THREW '+ago+'D AGO')+'</span>';
+        td.innerHTML=`${rawName}<span class="name-expand-arrow">▶</span>${agoHtml}`;
       } else {
         if(/Avg$/.test(h)) td.classList.add('col-optional');
-        td.innerHTML=fmtCell(d[h],h,i,d);
+        td.innerHTML=fmtCell(d[h],h,i,d)+(i===1?lbDeltaHtml(d):'');
       }
       tr.appendChild(td);
       if(i===0){
@@ -1951,11 +1986,26 @@ const hdrLandscapeMQ=window.matchMedia('(max-height:500px) and (pointer:coarse)'
 function updateHeaderHeight(){
   const h=document.querySelector('.brand-header');
   if(!h) return;
-  const el=document.documentElement, px=h.offsetHeight+'px';
+  const el=document.documentElement;
+  // v39: the offline banner docks under the header — sticky offsets and the
+  // page's top padding both need to clear it while it's showing.
+  const banner=document.getElementById('offlineBanner');
+  const bh=(banner&&document.body.classList.contains('lb-offline'))?banner.offsetHeight:0;
+  el.style.setProperty('--hdr-raw',h.offsetHeight+'px'); // banner's own top
+  const px=(h.offsetHeight+bh)+'px';
   el.style.setProperty('--header-visual',px);
   const scrollShrunk=el.classList.contains('hdr-compact')&&!hdrLandscapeMQ.matches;
   if(!scrollShrunk) el.style.setProperty('--header-height',px);
 }
+/* v39 (pick 2A) — offline indicator: the SW keeps serving cached data on
+   dugout wifi; this makes that state visible instead of silent. */
+function setOffline(off){
+  document.body.classList.toggle('lb-offline',!!off);
+  updateHeaderHeight();
+}
+window.addEventListener('offline',()=>setOffline(true));
+window.addEventListener('online',()=>setOffline(false));
+document.addEventListener('DOMContentLoaded',()=>setOffline(!navigator.onLine));
 // v35 — compact strip header (html.hdr-compact drives the CSS): always in
 // phone landscape; otherwise once scrolled past the fold, with hysteresis
 // (shrink past 80px, expand back above 24px) so it never flutters.
@@ -2461,6 +2511,7 @@ function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMo
 function dayDiff(a,b){return Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/86400000);}
 function addDays(iso,n){const d=new Date(iso+'T12:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmtMD(iso){const p=iso.split('-');return ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+p[1]]+' '+(+p[2]);}
+function fmtWD(iso){return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(iso+'T12:00').getDay()];}
 function restDaysFor(pitches,rules){for(const t of rules.tiers){if(pitches<=t[0])return t[1];}return rules.tiers[rules.tiers.length-1][1];}
 
 async function fetchBoardData(force){
@@ -2522,7 +2573,10 @@ function boardStatusChip(r){
   const max=(boardRules||BOARD_DEFAULT_RULES).maxDaily;
   if(r.status==='ok')return '<span class="bchip g">✓ Available · '+max+'</span>';
   if(r.status==='warn')return '<span class="bchip a">⚠ '+r.note+'</span>';
-  return '<span class="bchip r">✗ Rest → '+fmtMD(r.eligible)+'</span>';
+  // v39 (pick 5B): the chip answers the planning question directly —
+  // amber when the arm is back tomorrow, red with the return day otherwise.
+  if(dayDiff(todayISO(),r.eligible)<=1)return '<span class="bchip a">◔ Back tomorrow</span>';
+  return '<span class="bchip r">✗ Back '+fmtWD(r.eligible)+' '+fmtMD(r.eligible)+'</span>';
 }
 
 function renderBoard(){

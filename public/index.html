@@ -94,7 +94,16 @@
     <div class="brand-school">MINNEWASKA</div>
     <div class="brand-main"><span class="lakers-text">LAKERS</span><span class="baseball-text">BASEBALL</span></div>
     <div class="color-bar"><span class="cb-blue"></span><span class="cb-blue"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-silver"></span><span class="cb-silver"></span><span class="cb-green"></span><span class="cb-green"></span><span class="cb-blue"></span><span class="cb-blue"></span></div>
+    <!-- v39 (pick 1A): desktop nav — lives in the scrolled compact strip only -->
+    <nav class="hdr-nav" id="hdrNav" aria-label="Sections">
+      <button data-view="players" onclick="switchView('players')" class="on">Players</button>
+      <button data-view="tracker" onclick="switchView('tracker')">Tracker</button>
+      <button data-view="sheet" onclick="switchView('sheet')">Leaderboard</button>
+      <button data-view="board" onclick="switchView('board')">Board</button>
+    </nav>
   </div>
+  <!-- v39 (pick 2A): shows while the browser is offline; SW serves cached data -->
+  <div class="offline-banner" id="offlineBanner" role="status"><span class="ob-dot"></span> OFFLINE — SHOWING SAVED DATA</div>
 
   <div class="view-tracker" id="viewTracker">
   <div class="track-mode-seg" id="trackModeSeg">

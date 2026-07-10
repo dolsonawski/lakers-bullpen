@@ -396,9 +396,20 @@
     fetch_all: async function () {
       var snap = await pitchersCol(SELECTED_SEASON).get();
       var headers = ['Name', 'Exec.', 'FA Avg', 'FA Exec.', 'CB Avg', 'CB Exec.', 'CH Avg', 'CH Exec.'];
+      // Previous season's exec by doc id — powers the leaderboard trend arrows.
+      // Doc ids are stable across seasons (docId of the canonical name).
+      var prevExec = {}, prevHasData = false;
+      try {
+        var prevSnap = await pitchersCol(String(Number(SELECTED_SEASON) - 1)).get();
+        prevSnap.forEach(function (doc) {
+          var p = doc.data();
+          if (p && p.exec != null && p.totalPitches) { prevExec[doc.id] = p.exec; prevHasData = true; }
+        });
+      } catch (e) {}
       var data = [];
       snap.forEach(function (doc) {
         var d = doc.data();
+        var recent = d.recentSessions || [];
         data.push({
           'Name': toFirstLast(d.name || doc.id.replace(/_/g, ' ')),
           'Exec.': d.exec || 0,
@@ -406,10 +417,12 @@
           'CB Avg': d.cbAvg || 0, 'CB Exec.': d.cbExec || 0,
           'CH Avg': d.chAvg || 0, 'CH Exec.': d.chExec || 0,
           'fa_count': d.faCount || 0, 'cb_count': d.cbCount || 0, 'ch_count': d.chCount || 0,
-          'recentSessions': d.recentSessions || []
+          'recentSessions': recent,
+          'lastDate': (recent[0] && recent[0].date) || null,
+          'prevExec': Object.prototype.hasOwnProperty.call(prevExec, doc.id) ? prevExec[doc.id] : null
         });
       });
-      return { success: true, data: data, headers: headers };
+      return { success: true, data: data, headers: headers, prevSeason: prevHasData };
     },
 
     fetch_sessions: async function (params) {
@@ -649,7 +662,22 @@
           } catch (e2) {}
         }
       }
-      return { success: true, data: data, years: years, statlines: statlines };
+      // Bullpen rollups by season, keyed by normalized First Last name —
+      // hub pitching rows wear a "PEN exec · volume" chip from these.
+      var penByYear = {};
+      for (var bi = 0; bi < SEASONS.length; bi++) {
+        var PY = String(SEASONS[bi]);
+        try {
+          var ps = await pitchersCol(PY).get();
+          ps.forEach(function (doc) {
+            var pd = doc.data();
+            if (!pd || !pd.totalPitches) return;
+            var key = toFirstLast(pd.name || doc.id.replace(/_/g, ' ')).trim().toLowerCase();
+            (penByYear[PY] = penByYear[PY] || {})[key] = { exec: pd.exec || 0, pitches: pd.totalPitches || 0 };
+          });
+        } catch (e) {}
+      }
+      return { success: true, data: data, years: years, statlines: statlines, penByYear: penByYear };
     },
 
     // All statlines for one player (Hitting/Pitching/Fielding tabs),
