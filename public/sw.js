@@ -2,7 +2,7 @@
    Strategy: cache-first for the app shell (fast cold open on dugout wifi),
    but ALWAYS go to network for Firebase/Firestore (live data must never be
    served stale from cache). */
-const CACHE = 'lakers-bullpen-v39';
+const CACHE = 'lakers-bullpen-v40';
 const SHELL = [
   '/', '/index.html', '/styles.css', '/app.js',
   '/firebase-data-layer.js', '/gamechanger-import.js', '/player-stats.js', '/manifest.json',

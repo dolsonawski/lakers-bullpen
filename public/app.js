@@ -1741,7 +1741,7 @@ function renderPlayerCard(){
     (totalPitches?' · '+totalPitches+' pitches · '+totalSessions+' sessions · '+careerExec+'% career exec':'');
 
   if(!seasons.length){
-    document.getElementById('playerCardBody').innerHTML='<div class="empty-state" style="display:block;padding:40px 16px;text-align:center;color:var(--text-dim);">No session data recorded for this pitcher yet.</div>';
+    document.getElementById('playerCardBody').innerHTML='<div class="empty-brand"><img class="eb-wm" src="block-m.png" alt=""><div class="eb-h">NO SESSIONS FOR THIS PITCHER</div><div class="eb-p">Bullpen work lands here once a session is logged.</div><button class="eb-btn" onclick="switchView(\'tracker\')"><svg class="icon"><use href="#i-ball"/></svg> Log from Tracker</button></div>';
     return;
   }
 
@@ -2707,7 +2707,14 @@ async function loadSkillsLeaderboard(kind){
 
 function renderSkillsLeaderboard(kind,rows){
   const host=document.getElementById('lbSkillsHost');
-  if(!rows.length){host.innerHTML='<div class="data-empty" style="display:block;"><p>No '+({pop:'pop-time',sprint:'sprint',bp:'BP'})[kind]+' sessions saved this season yet. Log one from the Tracker tab.</p></div>';return;}
+  if(!rows.length){
+    const lbl={pop:'POP-TIME',sprint:'SPRINT',bp:'BP'}[kind];
+    host.innerHTML='<div class="empty-brand"><img class="eb-wm" src="block-m.png" alt="">'
+      +'<div class="eb-h">NO '+lbl+' SESSIONS</div>'
+      +'<div class="eb-p">Nothing logged this season. Results land here the moment one is saved.</div>'
+      +'<button class="eb-btn" onclick="switchView(\'tracker\')"><svg class="icon"><use href="#i-ball"/></svg> Log from Tracker</button></div>';
+    return;
+  }
   let head,body,foot;
   if(kind==='pop'||kind==='sprint'){
     rows.sort((a,b)=>a.best-b.best); // fastest first

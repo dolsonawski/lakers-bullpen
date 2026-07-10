@@ -1089,6 +1089,22 @@ body.splash-lock{overflow:hidden;}
 body.lb-offline .offline-banner{display:flex;}
 .ob-dot{width:7px;height:7px;border-radius:50%;background:var(--changeup,#f59e0b);box-shadow:0 0 8px rgba(245,158,11,0.7);flex:none;}
 
+/* v40 (pick 7A) — branded empty state: ghosted crest, Bebas headline, one
+   action button deep-linking to where the data gets logged. */
+.empty-brand{position:relative;overflow:hidden;padding:46px 22px 42px;text-align:center;}
+.empty-brand .eb-wm{position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);width:230px;opacity:0.06;pointer-events:none;filter:grayscale(35%);}
+.empty-brand .eb-h{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.06em;color:var(--silver-light);position:relative;}
+.empty-brand .eb-p{color:var(--text-dim);font-size:0.8rem;line-height:1.5;max-width:34ch;margin:8px auto 18px;position:relative;}
+.empty-brand .eb-btn{display:inline-flex;align-items:center;gap:7px;position:relative;background:var(--royal);border:none;border-radius:8px;color:#fff;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:10px 18px;cursor:pointer;transition:background 0.15s;}
+.empty-brand .eb-btn:hover{background:#1a5fb0;}
+
+/* v40 — desktop compact strip: the nav replaces the waffle (both at once was
+   noise); the gear stays as the Settings entry, same as mobile. */
+@media(min-width:601px){
+  html.hdr-compact .waffle-btn{display:none!important;}
+  html.hdr-compact .header-gear{display:flex;}
+}
+
 /* v39 (pick 3A) — leaderboard recency + season trend */
 .lb-ago{display:block;font-family:'IBM Plex Mono',monospace;font-size:0.54rem;letter-spacing:0.08em;color:var(--text-dim);margin-top:2px;}
 .lb-ago.hot{color:var(--green-bright,#03b35a);}

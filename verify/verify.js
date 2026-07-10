@@ -139,6 +139,13 @@ async function runViewport(browser, width, height, label) {
   });
   if (width >= 601) {
     check('compact strip shows nav links', nav.shown && nav.count === 4, nav.count + ' links');
+    // v40: nav replaces the waffle in the desktop strip; gear keeps Settings
+    const strip = await page.evaluate(() => ({
+      waffle: getComputedStyle(document.getElementById('waffleBtn')).display,
+      gear: getComputedStyle(document.getElementById('headerGear')).display
+    }));
+    check('waffle hidden in desktop strip', strip.waffle === 'none', strip.waffle);
+    check('gear shown in desktop strip', strip.gear === 'flex', strip.gear);
     await page.evaluate(() => { document.querySelector('#hdrNav [data-view="sheet"]').click(); });
     await new Promise(r => setTimeout(r, 400));
     const navSwitch = await page.evaluate(() => ({
@@ -241,6 +248,25 @@ async function runViewport(browser, width, height, label) {
   });
   check('leaderboard shows recency', lbTrend.ago === 'THREW 2D AGO', String(lbTrend.ago));
   check('leaderboard shows season delta', lbTrend.delta === '▲ 3.1', String(lbTrend.delta));
+
+  // -- v40 (7A): branded empty state on an empty skills leaderboard
+  await page.evaluate(() => window.setLbActivity('pop'));
+  await new Promise(r => setTimeout(r, 500));
+  const emptyBrand = await page.evaluate(() => {
+    const host = document.getElementById('lbSkillsHost');
+    const eb = host ? host.querySelector('.empty-brand') : null;
+    return {
+      present: !!eb,
+      headline: eb ? (eb.querySelector('.eb-h') || {}).textContent : null,
+      crest: eb ? !!eb.querySelector('.eb-wm') : false,
+      action: eb ? !!eb.querySelector('.eb-btn') : false
+    };
+  });
+  check('branded empty state renders', emptyBrand.present && emptyBrand.crest && emptyBrand.action,
+    String(emptyBrand.headline));
+  check('empty state headline', emptyBrand.headline === 'NO POP-TIME SESSIONS', String(emptyBrand.headline));
+  await page.evaluate(() => window.setLbActivity('bullpen'));
+  await new Promise(r => setTimeout(r, 300));
 
   // -- v36: player card opened from the leaderboard titles First Last
   await page.evaluate(() => { document.querySelector('#dataBody tr td').click(); });
